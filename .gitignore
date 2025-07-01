@@ -1,0 +1,9 @@
+
+
+# DEV
+# air tmp files
+tmp
+.air.toml
+
+# ENV
+.env
