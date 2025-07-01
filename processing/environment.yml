@@ -1,0 +1,33 @@
+name: qugopy
+channels:
+  - defaults
+dependencies:
+  - annotated-types=0.6.0=py313hca03da5_0
+  - bzip2=1.0.8=h80987f9_6
+  - ca-certificates=2025.2.25=hca03da5_0
+  - click=8.1.8=py313hca03da5_0
+  - expat=2.7.1=h313beb8_0
+  - libcxx=17.0.6=he5c5206_4
+  - libffi=3.4.4=hca03da5_1
+  - libmpdec=4.0.0=h80987f9_0
+  - ncurses=6.4=h313beb8_0
+  - openssl=3.0.16=h02f6b3c_0
+  - pip=25.1=pyhc872135_2
+  - pydantic=2.11.7=py313hca03da5_0
+  - pydantic-core=2.33.2=py313h5e3a92f_0
+  - python=3.13.5=h2eb94d5_100_cp313
+  - python-dotenv=1.1.0=py313hca03da5_0
+  - python_abi=3.13=0_cp313
+  - readline=8.2=h1a28f6b_0
+  - redis=3.5.3=pyhd3eb1b0_0
+  - setuptools=78.1.1=py313hca03da5_0
+  - sqlite=3.45.3=h80987f9_0
+  - tk=8.6.14=h6ba3021_1
+  - typing-extensions=4.12.2=py313hca03da5_0
+  - typing-inspection=0.4.0=py313hca03da5_0
+  - typing_extensions=4.12.2=py313hca03da5_0
+  - tzdata=2025b=h04d1e81_0
+  - wheel=0.45.1=py313hca03da5_0
+  - xz=5.6.4=h80987f9_1
+  - zlib=1.2.13=h18a0788_1
+prefix: /opt/homebrew/anaconda3/envs/qugopy
