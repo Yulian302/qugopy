@@ -1,22 +1,13 @@
-package queue
+package models
 
-// IntTask represents a task with priority-based ordering capabilities.
-// It's designed for use in priority queues where tasks are ordered by:
-//   - Priority (higher values take precedence)
-//   - ID (used for equality checks)
+// IntTask (internal task) represents a task with priority-based ordering capabilities.
+// It's designed for use in priority queues where tasks are ordered by: priority
 type IntTask struct {
+	// User defined task (omits internal properties)
+	Task
+
 	// ID uniquely identifies the task. Used for equality comparisons.
-	ID int
-
-	// Type categorizes the task (e.g., "email", "notification").
-	Type string
-
-	// Payload contains task-specific data in string format.
-	Payload string
-
-	// Priority determines execution order (higher values = higher priority).
-	// Range: 0-65535 (uint16)
-	Priority uint16
+	ID int `json:"id"`
 }
 
 // GT (Greater Than) compares task priorities.

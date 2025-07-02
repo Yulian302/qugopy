@@ -3,20 +3,22 @@ package queue
 import (
 	"os"
 	"testing"
+
+	"github.com/Yulian302/qugopy/models"
 )
 
 var (
 	q     *PriorityQueue
-	tasks []*IntTask
+	tasks []*models.IntTask
 )
 
 func TestMain(m *testing.M) {
 	q = &PriorityQueue{}
-	tasks = []*IntTask{
-		{ID: 1, Type: "python", Payload: "Task1", Priority: 5},
-		{ID: 2, Type: "go", Payload: "Task2", Priority: 2},
-		{ID: 3, Type: "python", Payload: "Task3", Priority: 3},
-		{ID: 4, Type: "go", Payload: "Task4", Priority: 1},
+	tasks = []*models.IntTask{
+		{ID: 1, Task: models.Task{Type: "python", Payload: "Task1", Priority: 5}},
+		{ID: 2, Task: models.Task{Type: "go", Payload: "Task2", Priority: 2}},
+		{ID: 3, Task: models.Task{Type: "python", Payload: "Task3", Priority: 3}},
+		{ID: 4, Task: models.Task{Type: "go", Payload: "Task4", Priority: 1}},
 	}
 	code := m.Run()
 	os.Exit(code)

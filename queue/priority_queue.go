@@ -12,6 +12,10 @@
 
 package queue
 
+import "github.com/Yulian302/qugopy/models"
+
+type IntTask = models.IntTask
+
 type PriorityQueue struct {
 	data []IntTask
 }
