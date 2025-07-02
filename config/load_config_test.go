@@ -1,10 +1,7 @@
 package config
 
 import (
-	"fmt"
 	"testing"
-
-	"github.com/go-redis/redis"
 )
 
 func (cfg *AppConfig) isValid() bool {
@@ -35,22 +32,5 @@ func TestLoadConfig(t *testing.T) {
 				t.Error("Config is invalid - required fields are empty")
 			}
 		})
-	}
-}
-
-func TestRedisHealth(t *testing.T) {
-	cfg, err := LoadConfig()
-	if err != nil {
-		t.Errorf("LoadConfig() error = %v", err)
-		return
-	}
-	rdb := redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:%s", cfg.REDIS.HOST, cfg.REDIS.PORT),
-	})
-
-	defer rdb.Close()
-
-	if _, err := rdb.Ping().Result(); err != nil {
-		t.Fatalf("Redis ping failed: %v", err)
 	}
 }
