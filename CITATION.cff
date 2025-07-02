@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+title: QugoPy
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Yulian
+    family-names: Bohomol
+    email: bohomolyulian3022003@gmail.com
+    orcid: 'https://orcid.org/0009-0006-0554-9264'
+repository-code: 'https://github.com/Yulian302/qugopy'
+abstract: Efficient task scheduler
+license: MIT
