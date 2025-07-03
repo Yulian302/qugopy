@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/Yulian302/qugopy/config"
+	"github.com/Yulian302/qugopy/grpc"
 	"github.com/Yulian302/qugopy/internal/queue"
 	"github.com/Yulian302/qugopy/models"
 	"github.com/gin-gonic/gin"
@@ -96,6 +97,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go grpc.Start()
 
 	r := gin.Default()
 

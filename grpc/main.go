@@ -1,0 +1,67 @@
+package grpc
+
+import (
+	"context"
+	"log"
+	"net"
+
+	taskpb "github.com/Yulian302/qugopy/github.com/Yulian302/qugopy/proto"
+	"github.com/Yulian302/qugopy/internal/queue"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+)
+
+type Server struct {
+	taskpb.UnimplementedTaskServiceServer
+}
+
+func ToProto(t *queue.IntTask) *taskpb.IntTask {
+	if t == nil {
+		return nil
+	}
+	var deadline *timestamppb.Timestamp
+
+	if t.Deadline != nil {
+		deadline = timestamppb.New(*t.Deadline)
+	}
+
+	var recurring *wrapperspb.BoolValue
+	if t.Recurring != nil {
+		recurring = wrapperspb.Bool(*t.Recurring)
+	}
+
+	return &taskpb.IntTask{
+		Id: t.ID,
+		Task: &taskpb.Task{
+			Type:      t.Task.Type,
+			Payload:   t.Task.Payload,
+			Priority:  uint32(t.Task.Priority),
+			Deadline:  deadline,
+			Recurring: recurring,
+		},
+	}
+}
+
+func (s *Server) GetTask(ctx context.Context, _ *taskpb.Empty) (*taskpb.IntTask, error) {
+	t, ok := queue.DefaultLocalQueue.PQ.Pop()
+	if !ok {
+		return nil, status.Error(codes.NotFound, "queue empty")
+	}
+	return ToProto(&t), nil
+}
+
+func Start() {
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("listen failed: %v", err)
+	}
+	gs := grpc.NewServer()
+	taskpb.RegisterTaskServiceServer(gs, &Server{})
+	log.Println("gRPC listening on :50051")
+	if err := gs.Serve(lis); err != nil {
+		log.Fatalf("serve failed: %v", err)
+	}
+}
