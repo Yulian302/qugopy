@@ -11,6 +11,7 @@ import (
 
 	"github.com/Yulian302/qugopy/config"
 	"github.com/Yulian302/qugopy/models"
+	"github.com/Yulian302/qugopy/queue"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 )
@@ -63,6 +64,7 @@ func TaskEnqueueHandler(c *gin.Context) {
 		return
 	}
 
+	// push to redis
 	if mode == "redis" {
 		intCmd := rdb.LPush("task_queue", userTaskJson)
 		if err := intCmd.Err(); err != nil {
@@ -75,7 +77,9 @@ func TaskEnqueueHandler(c *gin.Context) {
 		}
 	} else {
 		// enqueue locally
-		fmt.Print("enqueue locally")
+		queue.DefaultLocalQueue.Lock.Lock()
+		defer queue.DefaultLocalQueue.Lock.Unlock()
+		queue.DefaultLocalQueue.PQ.Push(*internalTask)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
