@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Yulian302/qugopy/models"
+	"github.com/google/uuid"
 )
 
 var (
@@ -15,10 +16,10 @@ var (
 func TestMain(m *testing.M) {
 	q = &PriorityQueue{}
 	tasks = []*models.IntTask{
-		{ID: 1, Task: models.Task{Type: "python", Payload: "Task1", Priority: 5}},
-		{ID: 2, Task: models.Task{Type: "go", Payload: "Task2", Priority: 2}},
-		{ID: 3, Task: models.Task{Type: "python", Payload: "Task3", Priority: 3}},
-		{ID: 4, Task: models.Task{Type: "go", Payload: "Task4", Priority: 1}},
+		{ID: uuid.New().String(), Task: models.Task{Type: "python", Payload: "Task1", Priority: 5}},
+		{ID: uuid.New().String(), Task: models.Task{Type: "go", Payload: "Task2", Priority: 2}},
+		{ID: uuid.New().String(), Task: models.Task{Type: "python", Payload: "Task3", Priority: 3}},
+		{ID: uuid.New().String(), Task: models.Task{Type: "go", Payload: "Task4", Priority: 1}},
 	}
 	code := m.Run()
 	os.Exit(code)

@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/Yulian302/qugopy/config"
 	"github.com/Yulian302/qugopy/models"
 	"github.com/gin-gonic/gin"
@@ -50,7 +52,7 @@ func TaskEnqueueHandler(c *gin.Context) {
 
 	internalTask := &models.IntTask{
 		Task: task,
-		ID:   2, //TODO Include ID generator
+		ID:   uuid.New().String(),
 	}
 	userTaskJson, err := json.Marshal(internalTask)
 	if err != nil {

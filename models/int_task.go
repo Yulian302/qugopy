@@ -7,7 +7,7 @@ type IntTask struct {
 	Task
 
 	// ID uniquely identifies the task. Used for equality comparisons.
-	ID int `json:"id"`
+	ID string `json:"id"`
 }
 
 // GT (Greater Than) compares task priorities.
