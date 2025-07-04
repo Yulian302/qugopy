@@ -18,7 +18,9 @@ func cleanup() {
 }
 
 func TestMain(m *testing.M) {
-	cfg, err := config.LoadConfig()
+	var cfg *config.RootConfig
+	var err error
+	cfg, err = config.LoadConfig()
 	if err != nil {
 		fmt.Printf("LoadConfig() error = %v\n", err)
 		os.Exit(1)

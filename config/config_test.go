@@ -12,25 +12,11 @@ func (cfg *RootConfig) isValid() bool {
 }
 
 func TestLoadConfig(t *testing.T) {
-	tests := []struct {
-		name    string
-		wantErr bool
-	}{
-		{
-			name:    "valid config",
-			wantErr: false,
-		},
+	cfg, err := LoadConfig()
+	if err != nil {
+		t.Errorf("LoadConfig() error = %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg, err := LoadConfig()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LoadConfig() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !cfg.isValid() {
-				t.Error("Config is invalid - required fields are empty")
-			}
-		})
+	if !cfg.isValid() {
+		t.Error("Config is invalid - required fields are empty")
 	}
 }

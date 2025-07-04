@@ -25,20 +25,6 @@ func TaskEnqueueHandler(rdb *redis.Client) gin.HandlerFunc {
 			return
 		}
 		mode := config.AppConfig.MODE
-		if mode == "" {
-			log.Printf("MODE is empty")
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "MODE is absent in query parameters. Please provide MODE",
-			})
-			return
-		}
-		if !mode.IsValid() {
-			log.Printf("MODE is not valid")
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "MODE is not valid. Check docs for more information",
-			})
-			return
-		}
 
 		internalTask := &models.IntTask{
 			Task: task,
