@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func (cfg *AppConfig) isValid() bool {
+func (cfg *RootConfig) isValid() bool {
 	return cfg.HOST != "" &&
 		cfg.PORT != "" &&
 		cfg.REDIS.HOST != "" &&
