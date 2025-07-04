@@ -57,7 +57,7 @@ class Worker:
 
                 if task_data:
                     _, raw = task_data
-                    task: Task = json.loads(raw)
+                    task: IntTask = json.loads(raw)
                     self.process_task(task)
                 else:
                     print("No task! Sleeping...")

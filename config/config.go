@@ -7,20 +7,29 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
+// Mode specified by user. Can be either `redis` or `local`. If `redis` mode is specified, all tasks are pushed to the Redis data store. On the other hand, if `local` is specified, in-memory priority queue is used.
+type Mode string
+
+// Checks whether the mode is of valid type. Can be either `redis` or `local`
+func (m Mode) IsValid() bool {
+	return m == "redis" || m == "local"
+}
+
 type RedisConfig struct {
 	HOST string
 	PORT string
 }
 
-type AppConfig struct {
+type RootConfig struct {
 	HOST  string
 	PORT  string
 	REDIS RedisConfig
+	MODE  Mode
 }
 
-func LoadConfig() (*AppConfig, error) {
+func LoadConfig() (*RootConfig, error) {
 
-	cfg := &AppConfig{
+	cfg := &RootConfig{
 		HOST: os.Getenv("HOST"),
 		PORT: os.Getenv("PORT"),
 		REDIS: RedisConfig{
@@ -32,6 +41,8 @@ func LoadConfig() (*AppConfig, error) {
 	if cfg.HOST == "" || cfg.PORT == "" {
 		return nil, errors.New("configuration error")
 	}
-
+	AppConfig = cfg
 	return cfg, nil
 }
+
+var AppConfig *RootConfig
