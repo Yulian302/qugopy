@@ -2,9 +2,20 @@ package config
 
 import (
 	"errors"
+	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
+)
+
+var (
+	// Get current file full path from runtime
+	_, b, _, _ = runtime.Caller(0)
+
+	// Root folder of this project
+	ProjectRootPath = filepath.Join(filepath.Dir(b), "../")
 )
 
 // Mode specified by user. Can be either `redis` or `local`. If `redis` mode is specified, all tasks are pushed to the Redis data store. On the other hand, if `local` is specified, in-memory priority queue is used.
@@ -28,6 +39,10 @@ type RootConfig struct {
 }
 
 func LoadConfig() (*RootConfig, error) {
+
+	if err := godotenv.Load(ProjectRootPath + "/.env"); err != nil {
+		log.Fatal("Could not find project .env file")
+	}
 
 	cfg := &RootConfig{
 		HOST: os.Getenv("HOST"),
