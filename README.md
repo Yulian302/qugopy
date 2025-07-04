@@ -110,6 +110,8 @@ Contributions are welcomed and appreciated! If you'd like to improve this projec
     - Go to GitHub and create a PR against the main branch.
     - Clearly describe what your PR does and why it’s needed.
 
+# Development
+Enter development mode using `air` command. You can also customize `.air.toml` config file located in a root directory for your needs.
 
 # License
 Distributed under the MIT License. See `LICENSE.txt` for more information.
