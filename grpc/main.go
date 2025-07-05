@@ -24,13 +24,13 @@ func ToProto(t *queue.IntTask) *taskpb.IntTask {
 	}
 	var deadline *timestamppb.Timestamp
 
-	if t.Deadline != nil {
-		deadline = timestamppb.New(*t.Deadline)
+	if t.Task.Deadline != nil {
+		deadline = timestamppb.New(*t.Task.Deadline)
 	}
 
 	var recurring *wrapperspb.BoolValue
-	if t.Recurring != nil {
-		recurring = wrapperspb.Bool(*t.Recurring)
+	if t.Task.Recurring != nil {
+		recurring = wrapperspb.Bool(*t.Task.Recurring)
 	}
 
 	return &taskpb.IntTask{

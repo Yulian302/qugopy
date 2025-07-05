@@ -35,18 +35,18 @@ func TestPushPop(t *testing.T) {
 		t.Errorf("size of queue is wrong. Must be %d, got %d", len(tasks), size)
 	}
 
-	if val, ok := q.Pop(); !ok || val.Priority != 1 {
-		t.Errorf("priority queue pop value: %d, must be 1", val.Priority)
+	if val, ok := q.Pop(); !ok || val.Task.Priority != 1 {
+		t.Errorf("priority queue pop value: %d, must be 1", val.Task.Priority)
 	}
-	if val, ok := q.Pop(); !ok || val.Priority != 2 {
-		t.Errorf("priority queue pop value: %d, must be 2", val.Priority)
+	if val, ok := q.Pop(); !ok || val.Task.Priority != 2 {
+		t.Errorf("priority queue pop value: %d, must be 2", val.Task.Priority)
 	}
 
-	if val, ok := q.Pop(); !ok || val.Priority != 3 {
-		t.Errorf("priority queue pop value: %d, must be 3", val.Priority)
+	if val, ok := q.Pop(); !ok || val.Task.Priority != 3 {
+		t.Errorf("priority queue pop value: %d, must be 3", val.Task.Priority)
 	}
-	if val, ok := q.Pop(); !ok || val.Priority != 5 {
-		t.Errorf("priority queue pop value: %d, must be 5", val.Priority)
+	if val, ok := q.Pop(); !ok || val.Task.Priority != 5 {
+		t.Errorf("priority queue pop value: %d, must be 5", val.Task.Priority)
 	}
 }
 
@@ -59,29 +59,29 @@ func TestDelete(t *testing.T) {
 		t.Errorf("could not delete value 1")
 	}
 
-	task, ok := q.Peek()
+	intTask, ok := q.Peek()
 
 	if !ok {
 		t.Errorf("could not peek root element")
 	}
-	if task.Priority != 2 {
-		t.Errorf("wrong order after deleting root elem. Got %d, must be %d", task.Priority, 2)
+	if intTask.Task.Priority != 2 {
+		t.Errorf("wrong order after deleting root elem. Got %d, must be %d", intTask.Task.Priority, 2)
 	}
 
 	if ok := q.Delete(3); !ok {
 		t.Errorf("could not delete value 3")
 	}
 
-	task, ok = q.Peek()
+	intTask, ok = q.Peek()
 
 	if !ok {
 		t.Errorf("could not peek root element")
 	}
-	if task.Priority != 2 {
-		t.Errorf("wrong order after deleting middle elem. Got %d, must be %d", task.Priority, 2)
+	if intTask.Task.Priority != 2 {
+		t.Errorf("wrong order after deleting middle elem. Got %d, must be %d", intTask.Task.Priority, 2)
 	}
-	if q.data[len(q.data)-1].Priority != 5 {
-		t.Errorf("wrong order after deleting middle elem. Got %d, must be %d", q.data[len(q.data)-1].Priority, 5)
+	if q.data[len(q.data)-1].Task.Priority != 5 {
+		t.Errorf("wrong order after deleting middle elem. Got %d, must be %d", q.data[len(q.data)-1].Task.Priority, 5)
 	}
 
 }

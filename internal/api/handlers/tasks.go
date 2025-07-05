@@ -41,9 +41,12 @@ func TaskEnqueueHandler(rdb *redis.Client) gin.HandlerFunc {
 
 		// push to redis
 		if mode == "redis" {
-			intCmd := rdb.LPush("task_queue", userTaskJson)
+			intCmd := rdb.ZAdd("task_queue", redis.Z{
+				Score:  float64(task.Priority),
+				Member: userTaskJson,
+			})
 			if err := intCmd.Err(); err != nil {
-				log.Printf("Redis LPush failed: %v", err)
+				log.Printf("Redis ZAdd failed: %v", err)
 				c.JSON(http.StatusServiceUnavailable, gin.H{
 					"error":   "Task queue unavailable",
 					"details": err.Error(),

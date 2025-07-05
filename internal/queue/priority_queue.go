@@ -109,7 +109,7 @@ func (pq *PriorityQueue) Delete(priority uint16) bool {
 		return false
 	}
 	for idx, val := range pq.data {
-		if val.Priority == uint16(priority) {
+		if val.Task.Priority == uint16(priority) {
 			pq.data[idx] = pq.data[len(pq.data)-1]
 			pq.data = pq.data[:len(pq.data)-1]
 			if idx >= len(pq.data) {

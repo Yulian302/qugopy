@@ -4,7 +4,7 @@ package models
 // It's designed for use in priority queues where tasks are ordered by: priority
 type IntTask struct {
 	// User defined task (omits internal properties)
-	Task
+	Task Task `json:"task"`
 
 	// ID uniquely identifies the task. Used for equality comparisons.
 	ID string `json:"id"`
@@ -19,25 +19,25 @@ type IntTask struct {
 //	task2 := &IntTask{Priority: 3}
 //	task1.GT(task2) // true
 func (t1 *IntTask) GT(t2 *IntTask) bool {
-	return t1.Priority > t2.Priority
+	return t1.Task.Priority > t2.Task.Priority
 }
 
 // GTE (Greater Than or Equal) compares task priorities.
 // Returns true if t1 has equal or higher priority than t2.
 func (t1 *IntTask) GTE(t2 *IntTask) bool {
-	return t1.Priority >= t2.Priority
+	return t1.Task.Priority >= t2.Task.Priority
 }
 
 // LT (Less Than) compares task priorities.
 // Returns true if t1 has lower priority than t2.
 func (t1 *IntTask) LT(t2 *IntTask) bool {
-	return t1.Priority < t2.Priority
+	return t1.Task.Priority < t2.Task.Priority
 }
 
 // LTE (Less Than or Equal) compares task priorities.
 // Returns true if t1 has equal or lower priority than t2.
 func (t1 *IntTask) LTE(t2 *IntTask) bool {
-	return t1.Priority <= t2.Priority
+	return t1.Task.Priority <= t2.Task.Priority
 }
 
 // EQ (Equal) checks task identity.
