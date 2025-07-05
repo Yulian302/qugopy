@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,6 +24,12 @@ var (
 	r   *gin.Engine
 	rdb *redis.Client
 )
+
+func newTestRouter(rdb *redis.Client) *gin.Engine {
+	r := gin.New()
+	r.POST("/tasks", TaskEnqueueHandler(rdb))
+	return r
+}
 
 func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
@@ -61,8 +68,7 @@ func TestEnqueueHandlerRedis_EdgeCases(t *testing.T) {
 	t.Cleanup(func() {
 		_ = rdb.Del("task_queue").Err()
 	})
-
-	r.POST("/tasks", TaskEnqueueHandler(rdb))
+	r := newTestRouter(rdb)
 
 	tests := []struct {
 		name       string
@@ -109,10 +115,13 @@ func TestEnqueueHandlerRedis_EdgeCases(t *testing.T) {
 				assert.Contains(t, w.Body.String(), tt.wantBody)
 			}
 			if tt.wantStatus == 201 {
-				tasks, err := rdb.LRange("task_queue", 0, -1).Result()
+				res, err := rdb.ZPopMin("task_queue", 1).Result()
 				assert.NoError(t, err)
-				assert.NotEmpty(t, tasks)
-				assert.Contains(t, tasks[0], `"type":"email"`)
+				var task queue.IntTask
+				if err := json.Unmarshal([]byte(res[0].Member.(string)), &task); err != nil {
+					log.Fatal(err)
+				}
+				assert.Equal(t, task.Task.Type, "email")
 			}
 		})
 	}
@@ -122,7 +131,7 @@ func TestEnqueueHandlerRedis_EdgeCases(t *testing.T) {
 func TestEnqueueHandlerLocal_EdgeCases(t *testing.T) {
 
 	config.AppConfig.MODE = "local"
-	r.POST("/tasks", TaskEnqueueHandler(rdb))
+	r := newTestRouter(rdb)
 
 	tests := []struct {
 		name       string

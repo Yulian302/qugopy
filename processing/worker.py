@@ -53,11 +53,11 @@ class Worker:
                     time.sleep(1)
                     continue
             try:
-                task_data = rdb.brpop("task_queue", timeout=5)
-
+                task_data = rdb.zpopmin("task_queue", 1)
                 if task_data:
-                    _, raw = task_data
-                    task: IntTask = json.loads(raw)
+                    raw, _ = task_data[0]
+                    task_dict = json.loads(raw)
+                    task = IntTask(**task_dict)
                     self.process_task(task)
                 else:
                     print("No task! Sleeping...")
