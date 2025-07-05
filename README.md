@@ -113,6 +113,12 @@ Contributions are welcomed and appreciated! If you'd like to improve this projec
 # Development
 Enter development mode using `air` command. You can also customize `.air.toml` config file located in a root directory for your needs.
 
+# Miscellaneous
+Here you can find some information about the project: system diagrams, charts, as well as execution flows.
+## High-level architecture
+![High-level arch](https://github.com/user-attachments/assets/cded4049-4cde-4027-b443-9ea2c856c567)
+<p align="center">Picture 1. High-level system architecture</p>
+
 # License
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
