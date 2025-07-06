@@ -7,13 +7,19 @@ import (
 
 	"github.com/Yulian302/qugopy/config"
 	"github.com/Yulian302/qugopy/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 )
 
 var rdb *redis.Client
 var ctx = context.Background()
 
-func StartApp(mode string) {
+func StartApp(mode string, isProduction bool) {
+
+	if isProduction {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	cfg, err := config.LoadConfig()
 
 	if err != nil {

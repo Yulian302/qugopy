@@ -1,8 +1,12 @@
 package trie
 
+// group - is a group of a word (default: 0)
+// it is required to obtain only words that are members of a specific group
+// 0 as an argument means no group (returns all)
 type TrieRuneNode struct {
 	children    map[rune]*TrieRuneNode
 	isEndOfWord bool
+	group       int
 }
 
 type TrieRune struct {
@@ -15,16 +19,16 @@ func NewRuneTrie() *TrieRune {
 	}
 }
 
-func (t *TrieRune) Populate(words []string) {
+func (t *TrieRune) Populate(words []string, group int) {
 	if len(words) == 0 {
 		return
 	}
 	for _, word := range words {
-		t.Insert(word)
+		t.Insert(word, group)
 	}
 }
 
-func (t *TrieRune) Insert(word string) {
+func (t *TrieRune) Insert(word string, group int) {
 	if len(word) == 0 {
 		return
 	}
@@ -35,6 +39,7 @@ func (t *TrieRune) Insert(word string) {
 		}
 		curr = curr.children[char]
 	}
+	curr.group = group
 	curr.isEndOfWord = true
 
 }
@@ -52,6 +57,7 @@ func (t *TrieRune) deleteHelper(node *TrieRuneNode, word string, index int) bool
 			return false
 		}
 		node.isEndOfWord = false
+		node.group = 0
 		return len(node.children) == 0
 	}
 
@@ -69,26 +75,28 @@ func (t *TrieRune) deleteHelper(node *TrieRuneNode, word string, index int) bool
 	return false
 }
 
-func (t *TrieRune) GetAllWords() []string {
+func (t *TrieRune) GetAllWords(group int) []string {
 	words := make([]string, 0)
 	if len(t.Root.children) == 0 {
 		return []string{}
 	}
-	t.getAllWordsDfs(t.Root, "", &words)
+	t.getAllWordsDfs(t.Root, "", &words, group)
 	return words
 }
 
-func (t *TrieRune) getAllWordsDfs(node *TrieRuneNode, path string, tokens *[]string) {
+func (t *TrieRune) getAllWordsDfs(node *TrieRuneNode, path string, tokens *[]string, group int) {
 	if node.isEndOfWord {
-		*tokens = append(*tokens, path)
+		if node.group == group || group == 0 && node.group == 0 {
+			*tokens = append(*tokens, path)
+		}
 	}
 
 	for char, child := range node.children {
-		t.getAllWordsDfs(child, path+string(char), tokens)
+		t.getAllWordsDfs(child, path+string(char), tokens, group)
 	}
 }
 
-func (t *TrieRune) SearchPrefix(prefix string, includePrefix bool) []string {
+func (t *TrieRune) SearchPrefix(prefix string, includePrefix bool, group int) []string {
 	if len(prefix) == 0 {
 		return []string{}
 	}
@@ -101,23 +109,25 @@ func (t *TrieRune) SearchPrefix(prefix string, includePrefix bool) []string {
 	}
 	words := make([]string, 0)
 	if includePrefix {
-		t.searchPrefixDfs(curr, prefix, &words)
+		t.searchPrefixDfs(curr, prefix, &words, group)
 	} else {
-		t.searchPrefixDfs(curr, "", &words)
+		t.searchPrefixDfs(curr, "", &words, group)
 	}
 	return words
 }
-func (t *TrieRune) searchPrefixDfs(node *TrieRuneNode, path string, words *[]string) {
+func (t *TrieRune) searchPrefixDfs(node *TrieRuneNode, path string, words *[]string, group int) {
 	if node == nil {
 		return
 	}
 
 	if node.isEndOfWord {
-		*words = append(*words, path)
+		if node.group == group || group == 0 && node.group == 0 {
+			*words = append(*words, path)
+		}
 	}
 
 	for char, child := range node.children {
-		t.searchPrefixDfs(child, path+string(char), words)
+		t.searchPrefixDfs(child, path+string(char), words, group)
 	}
 }
 
@@ -135,19 +145,21 @@ func (t *TrieRune) StartsWith(prefix string) bool {
 	return true
 }
 
-func (t *TrieRune) FuzzySearch(pattern string) []string {
+func (t *TrieRune) FuzzySearch(pattern string, group int) []string {
 	if len(pattern) == 0 {
 		return []string{}
 	}
 	words := make([]string, 0)
-	t.fuzzySearchDfs(t.Root, pattern, "", 0, &words)
+	t.fuzzySearchDfs(t.Root, pattern, "", 0, &words, group)
 	return words
 }
 
-func (t *TrieRune) fuzzySearchDfs(node *TrieRuneNode, pattern string, path string, index int, words *[]string) {
+func (t *TrieRune) fuzzySearchDfs(node *TrieRuneNode, pattern string, path string, index int, words *[]string, group int) {
 	if index == len(pattern) {
 		if node.isEndOfWord {
-			*words = append(*words, path)
+			if node.group == group || group == 0 && node.group == 0 {
+				*words = append(*words, path)
+			}
 		}
 		return
 	}
@@ -156,25 +168,27 @@ func (t *TrieRune) fuzzySearchDfs(node *TrieRuneNode, pattern string, path strin
 	switch char {
 	case '?':
 		for childChar, child := range node.children {
-			t.fuzzySearchDfs(child, pattern, path+string(childChar), index+1, words)
+			t.fuzzySearchDfs(child, pattern, path+string(childChar), index+1, words, group)
 		}
 	case '*':
-		t.fuzzySearchDfs(node, pattern, path, index+1, words)
+		t.fuzzySearchDfs(node, pattern, path, index+1, words, group)
 		for childChar, child := range node.children {
-			t.fuzzySearchDfs(child, pattern, path+string(childChar), index, words)
+			t.fuzzySearchDfs(child, pattern, path+string(childChar), index, words, group)
 		}
 	default:
 		if node.children[char] != nil {
-			t.fuzzySearchDfs(node.children[char], pattern, path+string(char), index+1, words)
+			t.fuzzySearchDfs(node.children[char], pattern, path+string(char), index+1, words, group)
 		}
 	}
 }
 
-func GenerateRuneTrie(words []string) *TrieRune {
-	if len(words) == 0 {
+func GenerateRuneTrie(words [][]string, groupNumbers []int) *TrieRune {
+	if len(words) == 0 || len(words) != len(groupNumbers) {
 		return nil
 	}
 	trie := NewRuneTrie()
-	trie.Populate(words)
+	for idx, groupedWords := range words {
+		trie.Populate(groupedWords, groupNumbers[idx])
+	}
 	return trie
 }

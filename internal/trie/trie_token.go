@@ -3,7 +3,7 @@ package trie
 import "strings"
 
 type TrieTokenNode struct {
-	children    map[string]*TrieTokenNode
+	Children    map[string]*TrieTokenNode
 	isEndOfWord bool
 }
 
@@ -13,7 +13,7 @@ type TrieToken struct {
 
 func NewTokenTrie() *TrieToken {
 	return &TrieToken{
-		Root: &TrieTokenNode{children: make(map[string]*TrieTokenNode)},
+		Root: &TrieTokenNode{Children: make(map[string]*TrieTokenNode)},
 	}
 }
 
@@ -32,10 +32,10 @@ func (t *TrieToken) Insert(tokens []string) {
 	}
 	curr := t.Root
 	for _, tok := range tokens {
-		if curr.children[tok] == nil {
-			curr.children[tok] = &TrieTokenNode{children: make(map[string]*TrieTokenNode)}
+		if curr.Children[tok] == nil {
+			curr.Children[tok] = &TrieTokenNode{Children: make(map[string]*TrieTokenNode)}
 		}
-		curr = curr.children[tok]
+		curr = curr.Children[tok]
 	}
 	curr.isEndOfWord = true
 
@@ -54,26 +54,26 @@ func (t *TrieToken) deleteHelper(node *TrieTokenNode, tokens []string, index int
 			return false
 		}
 		node.isEndOfWord = false
-		return len(node.children) == 0
+		return len(node.Children) == 0
 	}
 
 	token := tokens[index]
-	child, exists := node.children[token]
+	child, exists := node.Children[token]
 	if !exists {
 		return false
 	}
 
 	shouldDeleteChild := t.deleteHelper(child, tokens, index+1)
 	if shouldDeleteChild {
-		delete(node.children, token)
-		return len(node.children) == 0
+		delete(node.Children, token)
+		return len(node.Children) == 0
 	}
 	return false
 }
 
 func (t *TrieToken) GetAllWords() []string {
 	tokens := make([]string, 0)
-	if len(t.Root.children) == 0 {
+	if len(t.Root.Children) == 0 {
 		return []string{}
 	}
 	t.getAllWordsDfs(t.Root, []string{}, &tokens)
@@ -85,7 +85,7 @@ func (t *TrieToken) getAllWordsDfs(node *TrieTokenNode, path []string, tokens *[
 		*tokens = append(*tokens, strings.Join(path, " "))
 	}
 
-	for token, child := range node.children {
+	for token, child := range node.Children {
 		t.getAllWordsDfs(child, append(path, token), tokens)
 	}
 }
@@ -96,10 +96,10 @@ func (t *TrieToken) SearchPrefix(tokens []string, includePrefix bool) []string {
 	}
 	curr := t.Root
 	for _, token := range tokens {
-		if curr.children[token] == nil {
+		if curr.Children[token] == nil {
 			return []string{}
 		}
-		curr = curr.children[token]
+		curr = curr.Children[token]
 	}
 	words := make([]string, 0)
 	if includePrefix {
@@ -118,7 +118,7 @@ func (t *TrieToken) searchPrefixDfs(node *TrieTokenNode, path []string, words *[
 		*words = append(*words, strings.Join(path, " "))
 	}
 
-	for token, child := range node.children {
+	for token, child := range node.Children {
 		t.searchPrefixDfs(child, append(path, token), words)
 	}
 }
@@ -129,10 +129,10 @@ func (t *TrieToken) StartsWith(tokens []string) bool {
 	}
 	curr := t.Root
 	for _, token := range tokens {
-		if curr.children[token] == nil {
+		if curr.Children[token] == nil {
 			return false
 		}
-		curr = curr.children[token]
+		curr = curr.Children[token]
 	}
 	return true
 }
@@ -157,17 +157,17 @@ func (t *TrieToken) fuzzySearchDfs(node *TrieTokenNode, pattern, path []string, 
 	token := pattern[index]
 	switch token {
 	case "?":
-		for childToken, child := range node.children {
+		for childToken, child := range node.Children {
 			t.fuzzySearchDfs(child, pattern, append(path, childToken), index+1, words)
 		}
 	case "*":
 		t.fuzzySearchDfs(node, pattern, path, index+1, words)
-		for childToken, child := range node.children {
+		for childToken, child := range node.Children {
 			t.fuzzySearchDfs(child, pattern, append(path, childToken), index, words)
 		}
 	default:
-		if node.children[token] != nil {
-			t.fuzzySearchDfs(node.children[token], pattern, append(path, token), index+1, words)
+		if node.Children[token] != nil {
+			t.fuzzySearchDfs(node.Children[token], pattern, append(path, token), index+1, words)
 		}
 
 	}
