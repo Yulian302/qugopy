@@ -1,5 +1,6 @@
 package shell
 
+
 import (
 	"errors"
 	"fmt"
@@ -39,6 +40,7 @@ func EraseCharacter(input *[]byte, stdout bool) {
 		os.Stdout.Write([]byte("\b \b"))
 	}
 }
+
 
 func printSuggestions(suggestions *[]string) {
 	if len(*suggestions) == 0 {
@@ -90,6 +92,7 @@ func eraseSuggestions(n int) {
 	os.Stdout.Write([]byte{0x1B, '[', 'u'})
 	os.Stdout.Sync()
 }
+
 
 func getInputTokens(input []byte) []string {
 	return strings.Fields(string(input))
@@ -153,6 +156,7 @@ func main() {
 	buffer := make([]byte, 1)
 	wordInput := make([]byte, 0)
 	input := make([]byte, 0)
+
 	var cmdSuggestions []string
 	var runeSuggestions []string
 	var isChangedInput bool
@@ -183,7 +187,9 @@ func main() {
 				if b != SPACE {
 					EraseCharacter(&wordInput, false)
 				}
+
 				isChangedInput = true
+
 			case CTRL_C:
 				{
 					fmt.Println("Exiting...")
@@ -200,13 +206,16 @@ func main() {
 						for len(input) > 0 && input[len(input)-1] == SPACE {
 							EraseCharacter(&input, true)
 						}
+
 						eraseSuggestions(lastSuggestionsPrinted)
 						lastSuggestionsPrinted = 0
 						isChangedInput = true
+
 					}
 				}
 			case HORIZONTAL_TAB:
 				{
+
 					if isChangedInput {
 						tokens := getInputTokens(input)
 						currGroup = len(tokens)
@@ -243,6 +252,7 @@ func main() {
 					isChangedInput = false
 				}
 
+
 			case CMD_BACKSPACE:
 				{
 					for len(input) > 0 {
@@ -251,9 +261,11 @@ func main() {
 							EraseCharacter(&wordInput, false)
 						}
 					}
+
 					eraseSuggestions(lastSuggestionsPrinted)
 					lastSuggestionsPrinted = 0
 					isChangedInput = true
+
 				}
 			default:
 				{
@@ -264,6 +276,7 @@ func main() {
 					}
 					isChangedInput = true
 					eraseSuggestions(len(cmdSuggestions) + len(runeSuggestions))
+
 					os.Stdout.Write(buffer)
 				}
 			}
