@@ -3,6 +3,8 @@ package cmd
 import (
 	"github.com/Yulian302/qugopy/grpc"
 	"github.com/spf13/cobra"
+
+	"github.com/Yulian302/qugopy/shell"
 )
 
 var (
@@ -15,7 +17,8 @@ var startCmd = &cobra.Command{
 	Short: "Start the application",
 	Run: func(cmd *cobra.Command, args []string) {
 		go grpc.Start()
-		StartApp(mode)
+		go StartApp(mode, true)
+		shell.StartInteractiveShell()
 	},
 }
 
