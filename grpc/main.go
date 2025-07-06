@@ -7,6 +7,7 @@ import (
 
 	taskpb "github.com/Yulian302/qugopy/github.com/Yulian302/qugopy/proto"
 	"github.com/Yulian302/qugopy/internal/queue"
+	"github.com/Yulian302/qugopy/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -60,7 +61,9 @@ func Start() {
 	}
 	gs := grpc.NewServer()
 	taskpb.RegisterTaskServiceServer(gs, &Server{})
-	log.Println("gRPC listening on :50051")
+
+	logging.DebugLog("gRPC listening on :50051")
+
 	if err := gs.Serve(lis); err != nil {
 		log.Fatalf("serve failed: %v", err)
 	}
