@@ -1,51 +1,132 @@
 package trie
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTrieCreate(t *testing.T) {
-	words := []string{"hello", "world"}
-	trie := GenerateTrie(words)
+func TestTrieTokenCreate(t *testing.T) {
+	tokens := [][]string{
+		{"send", "email"},
+		{"send", "file"},
+		{"set", "name"},
+		{"set", "password"},
+		{"run", "script"},
+	}
+	trie := GenerateTokenTrie(tokens)
 	count := 0
 	for _, word := range trie.GetAllWords() {
-		if word == "hello" || word == "world" {
-			count++
+
+		for i := 0; i < len(tokens); i++ {
+			if word == strings.Join(tokens[i], " ") {
+				count++
+			}
 		}
 	}
-	assert.Equal(t, count, len(words))
+	assert.Equal(t, len(tokens), count)
 }
 
-func TestTrieFuzzySearch(t *testing.T) {
-	words := []string{"to", "tea", "ted", "ten"}
-	trie := GenerateTrie(words)
+func TestTrieTokenFuzzySearch(t *testing.T) {
+	tokens := [][]string{
+		{"send", "email"},
+		{"send", "file"},
+		{"set", "name"},
+		{"set", "password"},
+		{"run", "script"},
+		{"run", "executable"},
+		{"start", "command", "workers"},
+		{"start", "command", "redis"},
+	}
+	trie := GenerateTokenTrie(tokens)
+	tests := []struct {
+		Pattern []string
+		Result  [][]string
+	}{
+		{
+			Pattern: []string{"send", "*"},
+			Result:  [][]string{{"send", "email"}, {"send", "file"}},
+		},
+		{
+			Pattern: []string{"set", "?"},
+			Result:  [][]string{{"set", "name"}, {"set", "password"}},
+		},
+		{
+			Pattern: []string{"run", "*"},
+			Result:  [][]string{{"run", "script"}, {"run", "executable"}},
+		},
+		{
+			Pattern: []string{"start", "?", "workers"},
+			Result:  [][]string{{"start", "command", "workers"}},
+		},
+	}
+	for _, tt := range tests {
+		foundTokens := trie.FuzzySearch(tt.Pattern)
+		for _, resTokens := range tt.Result {
+			resJoined := strings.Join(resTokens, " ")
+			assert.Contains(t, foundTokens, resJoined)
+		}
+	}
+}
+
+func TestTrieRuneCreate(t *testing.T) {
+	words := []string{
+		"send",
+		"set",
+		"run",
+		"start",
+		"restart",
+		"script",
+	}
+	trie := GenerateRuneTrie(words)
+	count := 0
+	for _, word := range trie.GetAllWords() {
+		for i := 0; i < len(words); i++ {
+			if word == words[i] {
+				count++
+			}
+		}
+	}
+	assert.Equal(t, len(words), count)
+}
+
+func TestTrieRuneFuzzySearch(t *testing.T) {
+	words := []string{
+		"send",
+		"sent",
+		"set",
+		"run",
+		"runner",
+		"restart",
+		"script",
+	}
+	trie := GenerateRuneTrie(words)
 	tests := []struct {
 		Pattern string
 		Result  []string
 	}{
 		{
-			Pattern: "t?a",
-			Result:  []string{"tea"},
+			Pattern: "s?n?",
+			Result:  []string{"send", "sent"},
 		},
 		{
-			Pattern: "t*",
-			Result:  []string{"to", "tea", "ted", "ten"},
+			Pattern: "r*n",
+			Result:  []string{"run"},
 		},
 		{
-			Pattern: "t?*",
-			Result:  []string{"to", "tea", "ted", "ten"},
+			Pattern: "re*",
+			Result:  []string{"restart"},
 		},
 		{
-			Pattern: "t*a",
-			Result:  []string{"tea"},
+			Pattern: "*t",
+			Result:  []string{"set", "script"},
 		},
 	}
 	for _, tt := range tests {
 		foundWords := trie.FuzzySearch(tt.Pattern)
-		for _, res := range tt.Result {
-			assert.Contains(t, foundWords, res)
+		for _, expected := range tt.Result {
+			assert.Contains(t, foundWords, expected)
 		}
 	}
 }
