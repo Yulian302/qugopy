@@ -163,7 +163,7 @@ func main() {
 	var currGroup int
 
 	for {
-		os.Stdout.Write([]byte("> "))
+		os.Stdout.Write([]byte("qugopy> "))
 		input = input[:0]
 		wordInput = wordInput[:0]
 		isChangedInput = true
@@ -244,7 +244,20 @@ func main() {
 							}
 						}
 
-						allSuggestions := append(cmdSuggestions, runeSuggestions...)
+						suggestionMap := make(map[string]struct{})
+
+						for _, s := range cmdSuggestions {
+							suggestionMap[s] = struct{}{}
+						}
+						for _, s := range runeSuggestions {
+							suggestionMap[s] = struct{}{}
+						}
+
+						allSuggestions := make([]string, 0, len(suggestionMap))
+						for s := range suggestionMap {
+							allSuggestions = append(allSuggestions, s)
+						}
+
 						eraseSuggestions(lastSuggestionsPrinted)
 						printSuggestions(&allSuggestions)
 						lastSuggestionsPrinted = len(allSuggestions)
