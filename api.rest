@@ -1,0 +1,70 @@
+GET http://127.0.0.1:5000/test
+
+
+###
+// invalid request body
+POST http://127.0.0.1:5000/tasks HTTP/1.1
+Content-Type: application/json
+
+{
+    "type":"email",
+    "priority":1
+}
+###
+// invalid request body field datatype
+POST http://127.0.0.1:5000/tasks HTTP/1.1
+Content-Type: application/json
+
+{
+    "type":"email",
+    "priority":"1",
+    "payload":"payload"
+}
+
+###
+// test mode is absent
+POST http://127.0.0.1:5000/tasks HTTP/1.1
+Content-Type: application/json
+
+{
+    "type":"email",
+    "payload":"payload",
+    "priority":1
+}
+
+###
+// test mode is present but invalid
+POST http://127.0.0.1:5000/tasks HTTP/1.1
+Content-Type: application/json
+
+{
+    "type":"email",
+    "payload":"payload",
+    "priority":1
+}
+
+
+###
+// test mode is present and valid (to redis)
+POST http://127.0.0.1:5000/tasks HTTP/1.1
+Content-Type: application/json
+
+{
+    "type":"email",
+    "payload":"payload",
+    "priority":1
+}
+
+
+###
+// test mode is present and valid (to local)
+POST http://127.0.0.1:5000/tasks HTTP/1.1
+Content-Type: application/json
+
+{
+    "type":"print",
+    "payload":"padyload",
+    "priority":5
+}
+
+

@@ -6,12 +6,12 @@ type TrieNode struct {
 }
 
 type Trie struct {
-	root *TrieNode
+	Root *TrieNode
 }
 
 func NewTrie() *Trie {
 	return &Trie{
-		root: &TrieNode{children: make(map[rune]*TrieNode)},
+		Root: &TrieNode{children: make(map[rune]*TrieNode)},
 	}
 }
 
@@ -28,7 +28,7 @@ func (t *Trie) Insert(word string) {
 	if len(word) == 0 {
 		return
 	}
-	curr := t.root
+	curr := t.Root
 	for _, char := range word {
 		if curr.children[char] == nil {
 			curr.children[char] = &TrieNode{children: make(map[rune]*TrieNode)}
@@ -39,10 +39,10 @@ func (t *Trie) Insert(word string) {
 }
 
 func (t *Trie) Delete(word string) bool {
-	if t.root == nil || len(word) == 0 {
+	if t.Root == nil || len(word) == 0 {
 		return false
 	}
-	return t.deleteHelper(t.root, word, 0)
+	return t.deleteHelper(t.Root, word, 0)
 }
 
 func (t *Trie) deleteHelper(node *TrieNode, word string, index int) bool {
@@ -70,10 +70,10 @@ func (t *Trie) deleteHelper(node *TrieNode, word string, index int) bool {
 
 func (t *Trie) GetAllWords() []string {
 	words := make([]string, 0)
-	if len(t.root.children) == 0 {
+	if len(t.Root.children) == 0 {
 		return []string{}
 	}
-	t.getAllWordsDfs(t.root, "", &words)
+	t.getAllWordsDfs(t.Root, "", &words)
 	return words
 }
 
@@ -92,14 +92,14 @@ func (t *Trie) FuzzySearch(pattern string) []string {
 		return []string{}
 	}
 	words := make([]string, 0)
-	t.fuzzySearchDfs(t.root, pattern, "", 0, &words)
+	t.fuzzySearchDfs(t.Root, pattern, "", 0, &words)
 	return words
 }
 func (t *Trie) SearchPrefix(prefix string) []string {
 	if len(prefix) == 0 {
 		return []string{}
 	}
-	curr := t.root
+	curr := t.Root
 	for _, char := range prefix {
 		if curr.children[char] == nil {
 			return []string{}
@@ -128,7 +128,7 @@ func (t *Trie) StartsWith(prefix string) bool {
 	if len(prefix) == 0 {
 		return true
 	}
-	curr := t.root
+	curr := t.Root
 	for _, char := range prefix {
 		if curr.children[char] == nil {
 			return false
