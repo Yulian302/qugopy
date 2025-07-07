@@ -1,6 +1,5 @@
 package shell
 
-
 import (
 	"errors"
 	"fmt"
@@ -12,102 +11,88 @@ import (
 	"github.com/Yulian302/qugopy/internal/trie"
 )
 
-var (
-	originalState          syscall.Termios
-	tokenTrie              *trie.TrieToken = trie.NewTokenTrie()
-	runeTrie               *trie.TrieRune  = trie.NewRuneTrie()
+type Shell struct {
+	input                  []byte
+	wordInput              []byte
+	runeSuggestions        []string
+	isChangedInput         bool
+	currGroup              int
 	lastSuggestionsPrinted int
-)
 
-var (
-	BACKSPACE_1      uint8 = 127
-	BACKSPACE_2      uint8 = 8
-	ENTER_1          uint8 = '\r'
-	ENTER_2          uint8 = '\n'
-	CTRL_C           uint8 = 3
-	OPTION_BACKSPACE uint8 = 23
-	SPACE            uint8 = 32
-	CMD_BACKSPACE    uint8 = 21
-	HORIZONTAL_TAB   uint8 = 9
-)
+	tokenTrie *trie.TrieToken
+	runeTrie  *trie.TrieRune
+}
 
-func EraseCharacter(input *[]byte, stdout bool) {
-	if len(*input) == 0 {
-		return
-	}
-	*input = (*input)[:len(*input)-1]
-	if stdout {
-		os.Stdout.Write([]byte("\b \b"))
+func NewShell() *Shell {
+	return &Shell{
+		input:          make([]byte, 0, 256),
+		wordInput:      make([]byte, 0, 64),
+		tokenTrie:      trie.NewTokenTrie(),
+		runeTrie:       trie.NewRuneTrie(),
+		isChangedInput: true,
+		currGroup:      0,
 	}
 }
 
-
-func printSuggestions(suggestions *[]string) {
-	if len(*suggestions) == 0 {
+func (sh *Shell) EraseCharacter(stdout bool) {
+	if len(sh.input) == 0 {
 		return
 	}
+	sh.input = sh.input[:len(sh.input)-1]
+	if stdout {
+		os.Stdout.Write(ERASE_CHAR)
+	}
+}
 
-	eraseSuggestions(len(*suggestions))
+func (sh *Shell) printSuggestions(suggestions []string) {
+	if len(suggestions) == 0 {
+		return
+	}
+	sh.eraseSuggestions(sh.lastSuggestionsPrinted)
 
-	// Save cursor
-	os.Stdout.Write([]byte("\033[s"))
-	// Move cursor down one line to print suggestions
-	os.Stdout.Write([]byte("\033[1E"))
-	// Dim style
-	os.Stdout.Write([]byte("\033[2m"))
+	os.Stdout.Write(SAVE_CURSOR_POS)
+	os.Stdout.Write(MOVE_CURSOR_DOWN_LEFT)
+	os.Stdout.Write(DIM_TEXT)
 
-	for _, s := range *suggestions {
+	for _, s := range suggestions {
 		os.Stdout.Write([]byte(s + "\n"))
 	}
 
-	// Reset style
-	os.Stdout.Write([]byte("\033[0m"))
-	// Restore cursor
-	os.Stdout.Write([]byte("\033[u"))
-
+	os.Stdout.Write(RESET_ALL_MODES)
+	os.Stdout.Write(RESTORE_CURSOR_POS)
 	os.Stdout.Sync()
 }
 
-func eraseSuggestions(n int) {
-	// Save cursor pos
-	os.Stdout.Write([]byte{0x1B, '[', 's'})
-
-	// Move down one line (where suggestions start)
-	os.Stdout.Write([]byte{0x1B, '[', '1', 'E'})
-
-	// For each suggestion line, clear it
+func (sh *Shell) eraseSuggestions(n int) {
+	if n == 0 {
+		return
+	}
+	os.Stdout.Write(SAVE_CURSOR_POS)
+	os.Stdout.Write(MOVE_CURSOR_DOWN_LEFT)
 	for i := 0; i < n; i++ {
-		// Clear entire line
-		os.Stdout.Write([]byte{0x1B, '[', '2', 'K'})
-		// Move cursor down one line unless last iteration
+		os.Stdout.Write(ERASE_ENTIRE_LINE)
 		if i != n-1 {
-			os.Stdout.Write([]byte{0x1B, '[', '1', 'E'})
+			os.Stdout.Write([]byte(MOVE_CURSOR_DOWN_LEFT))
 		}
 	}
-
-	// Move cursor back to the line just above suggestions
-	os.Stdout.Write([]byte{0x1B, '[', byte(n), 'F'})
-
-	// Restore cursor pos
-	os.Stdout.Write([]byte{0x1B, '[', 'u'})
+	os.Stdout.Write([]byte(fmt.Sprintf(MOVE_CURSOR_PREV_N_BEG, n)))
+	os.Stdout.Write(RESTORE_CURSOR_POS)
 	os.Stdout.Sync()
 }
 
-
-func getInputTokens(input []byte) []string {
-	return strings.Fields(string(input))
+func (sh *Shell) getInputTokens() []string {
+	return strings.Fields(string(sh.input))
 }
 
-func getNextTokensFromTokenTrie(tokens []string) []string {
-	curr := tokenTrie.Root
+func (sh *Shell) getNextTokensFromTokenTrie(tokens []string) []string {
+	curr := sh.tokenTrie.Root
 	for _, token := range tokens {
-		if next, ok := curr.Children[token]; ok {
-			curr = next
-		} else {
-			return []string{}
+		next, ok := curr.Children[token]
+		if !ok {
+			return nil
 		}
+		curr = next
 	}
-
 	result := make([]string, 0, len(curr.Children))
 	for child := range curr.Children {
 		result = append(result, child)
@@ -115,7 +100,115 @@ func getNextTokensFromTokenTrie(tokens []string) []string {
 	return result
 }
 
-func main() {
+func (sh *Shell) getLastWord() []byte {
+	words := strings.Fields(string(sh.input))
+	if len(words) == 0 {
+		return nil
+	}
+	return []byte(words[len(words)-1])
+}
+
+func (sh *Shell) populateRuneTrie(tokenGroups [][]string) {
+	maxCols := 0
+	for _, row := range tokenGroups {
+		if len(row) > maxCols {
+			maxCols = len(row)
+		}
+	}
+
+	columns := make([][]string, maxCols)
+	for i := 0; i < maxCols; i++ {
+		columns[i] = []string{}
+	}
+
+	for _, row := range tokenGroups {
+		for colIdx, val := range row {
+			columns[colIdx] = append(columns[colIdx], val)
+		}
+	}
+
+	for idx, column := range columns {
+		sh.runeTrie.Populate(column, idx+1)
+	}
+}
+
+func (sh *Shell) handleBackspace() {
+	sh.EraseCharacter(true)
+	sh.wordInput = sh.getLastWord()
+	sh.isChangedInput = true
+	sh.eraseSuggestions(sh.lastSuggestionsPrinted)
+}
+
+func (sh *Shell) handleEraseWord() {
+	for len(sh.input) > 0 && sh.input[len(sh.input)-1] != SPACE {
+		sh.EraseCharacter(true)
+		sh.wordInput = sh.getLastWord()
+	}
+	for len(sh.input) > 0 && sh.input[len(sh.input)-1] == SPACE {
+		sh.EraseCharacter(true)
+	}
+
+	sh.eraseSuggestions(sh.lastSuggestionsPrinted)
+	sh.lastSuggestionsPrinted = 0
+	sh.isChangedInput = true
+}
+
+func (sh *Shell) handleEraseAll() {
+	for len(sh.input) > 0 {
+		sh.EraseCharacter(true)
+	}
+	sh.wordInput = sh.wordInput[:0]
+	sh.eraseSuggestions(sh.lastSuggestionsPrinted)
+	sh.lastSuggestionsPrinted = 0
+	sh.isChangedInput = true
+}
+
+func (sh *Shell) handleAppendChar(b byte, buffer []byte) {
+	sh.input = append(sh.input, b)
+	sh.wordInput = append(sh.wordInput, b)
+	if b == SPACE {
+		sh.wordInput = sh.wordInput[:0]
+	}
+	sh.isChangedInput = true
+	sh.eraseSuggestions(sh.lastSuggestionsPrinted)
+	os.Stdout.Write(buffer)
+}
+
+func (sh *Shell) handleShowSuggestions() {
+	if sh.isChangedInput {
+		tokens := sh.getInputTokens()
+		sh.currGroup = len(tokens)
+
+		sh.runeSuggestions = nil
+		if len(tokens) == 0 {
+			sh.runeSuggestions = sh.runeTrie.GetAllWords(1)
+		} else if len(sh.wordInput) > 0 {
+			sh.runeSuggestions = sh.runeTrie.SearchPrefix(string(sh.wordInput), true, sh.currGroup)
+		} else {
+			nextTokens := sh.getNextTokensFromTokenTrie(tokens)
+			for _, allowed := range nextTokens {
+				sh.runeSuggestions = append(sh.runeSuggestions, allowed)
+			}
+		}
+
+		suggestionMap := map[string]struct{}{}
+		for _, s := range sh.runeSuggestions {
+			suggestionMap[s] = struct{}{}
+		}
+		allSuggestions := make([]string, 0, len(suggestionMap))
+		for s := range suggestionMap {
+			allSuggestions = append(allSuggestions, s)
+		}
+
+		sh.eraseSuggestions(sh.lastSuggestionsPrinted)
+		sh.printSuggestions(allSuggestions)
+		sh.lastSuggestionsPrinted = len(allSuggestions)
+
+		sh.isChangedInput = false
+	}
+}
+
+func (sh *Shell) Start(tokenGroups [][]string) {
 	fd := int(os.Stdin.Fd())
 	if err := enableTermRawMode(fd); err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to enter raw mode:", err)
@@ -123,51 +216,16 @@ func main() {
 	}
 	defer disableRawMode(fd)
 
-	tokens := [][]string{
-		{"send", "email"},
-		{"send", "file"},
-		{"set", "name"},
-		{"set", "password"},
-		{"run", "script"},
-		{"run", "executable"},
-		{"start", "command", "workers"},
-		{"start", "command", "redis"},
-	}
-	tokenGroups := []struct {
-		tokens []string
-		group  int
-	}{
-		{
-			tokens: []string{"send", "set", "run", "start"}, group: 1,
-		},
-		{
-			tokens: []string{"email", "file", "name", "password", "script", "executable", "command"}, group: 2,
-		},
-		{
-			tokens: []string{"workers", "redis"}, group: 3,
-		},
-	}
-
-	tokenTrie.Populate(tokens)
-	for _, groupedWords := range tokenGroups {
-		runeTrie.Populate(groupedWords.tokens, groupedWords.group)
-	}
+	sh.tokenTrie.Populate(tokenGroups)
+	sh.populateRuneTrie(tokenGroups)
 
 	buffer := make([]byte, 1)
-	wordInput := make([]byte, 0)
-	input := make([]byte, 0)
-
-	var cmdSuggestions []string
-	var runeSuggestions []string
-	var isChangedInput bool
-	var currGroup int
 
 	for {
-		os.Stdout.Write([]byte("qugopy> "))
-		input = input[:0]
-		wordInput = wordInput[:0]
-		isChangedInput = true
-		currGroup = 0
+		fmt.Print("qugopy> ")
+		sh.input, sh.wordInput = sh.input[:0], sh.wordInput[:0]
+		sh.isChangedInput = true
+		sh.currGroup = 0
 
 	OuterLoop:
 		for {
@@ -176,129 +234,29 @@ func main() {
 				fmt.Println("\nRead error:", err)
 				return
 			}
-
 			b := buffer[0]
-
 			switch b {
 			case ENTER_1, ENTER_2:
 				break OuterLoop
 			case BACKSPACE_1, BACKSPACE_2:
-				EraseCharacter(&input, true)
-				if b != SPACE {
-					EraseCharacter(&wordInput, false)
-				}
-
-				isChangedInput = true
-
+				sh.handleBackspace()
 			case CTRL_C:
-				{
-					fmt.Println("Exiting...")
-					return
-				}
+				fmt.Println("Exiting...")
+				return
 			case OPTION_BACKSPACE:
-				{
-					if len(input) > 0 {
-						for len(input) > 0 && input[len(input)-1] != SPACE {
-							EraseCharacter(&input, true)
-							EraseCharacter(&wordInput, false)
-						}
-						// removing trailing space
-						for len(input) > 0 && input[len(input)-1] == SPACE {
-							EraseCharacter(&input, true)
-						}
-
-						eraseSuggestions(lastSuggestionsPrinted)
-						lastSuggestionsPrinted = 0
-						isChangedInput = true
-
-					}
-				}
+				sh.handleEraseWord()
 			case HORIZONTAL_TAB:
-				{
-
-					if isChangedInput {
-						tokens := getInputTokens(input)
-						currGroup = len(tokens)
-
-						cmdSuggestions = nil
-						runeSuggestions = nil
-
-						if len(tokens) == 0 {
-							// suggest first token
-							runeSuggestions = runeTrie.GetAllWords(1)
-						} else if len(wordInput) > 0 {
-							// mid-token completion (like 'em' → 'email')
-							runeSuggestions = runeTrie.SearchPrefix(string(wordInput), true, currGroup)
-						} else {
-							// Cursor after space → user might want next token OR full command
-							cmdSuggestions = tokenTrie.SearchPrefix(tokens, false)
-
-							nextTokens := getNextTokensFromTokenTrie(tokens)
-							for _, candidate := range runeTrie.GetAllWords(currGroup + 1) {
-								for _, allowed := range nextTokens {
-									if candidate == allowed {
-										runeSuggestions = append(runeSuggestions, candidate)
-										break
-									}
-								}
-							}
-						}
-
-						suggestionMap := make(map[string]struct{})
-
-						for _, s := range cmdSuggestions {
-							suggestionMap[s] = struct{}{}
-						}
-						for _, s := range runeSuggestions {
-							suggestionMap[s] = struct{}{}
-						}
-
-						allSuggestions := make([]string, 0, len(suggestionMap))
-						for s := range suggestionMap {
-							allSuggestions = append(allSuggestions, s)
-						}
-
-						eraseSuggestions(lastSuggestionsPrinted)
-						printSuggestions(&allSuggestions)
-						lastSuggestionsPrinted = len(allSuggestions)
-					}
-					isChangedInput = false
-				}
-
-
+				sh.handleShowSuggestions()
 			case CMD_BACKSPACE:
-				{
-					for len(input) > 0 {
-						EraseCharacter(&input, true)
-						if len(wordInput) > 0 {
-							EraseCharacter(&wordInput, false)
-						}
-					}
-
-					eraseSuggestions(lastSuggestionsPrinted)
-					lastSuggestionsPrinted = 0
-					isChangedInput = true
-
-				}
+				sh.handleEraseAll()
 			default:
-				{
-					input = append(input, b)
-					wordInput = append(wordInput, b)
-					if b == SPACE {
-						wordInput = wordInput[:0]
-					}
-					isChangedInput = true
-					eraseSuggestions(len(cmdSuggestions) + len(runeSuggestions))
-
-					os.Stdout.Write(buffer)
-				}
+				sh.handleAppendChar(b, buffer)
 			}
-
 		}
-		line := string(input)
-		fmt.Println()
 
-		if line == "exit" {
+		line := string(sh.input)
+		fmt.Println()
+		if strings.TrimSpace(line) == "exit" {
 			fmt.Println("Goodbye...")
 			break
 		}
@@ -312,14 +270,11 @@ func enableTermRawMode(fd int) error {
 	if err != 0 {
 		return errors.New("Error calling syscall")
 	}
-
 	originalState = termios
-
 	termios.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.ISIG
 	termios.Iflag &^= syscall.IXON | syscall.ICRNL
 	termios.Cc[syscall.VMIN] = 1
 	termios.Cc[syscall.VTIME] = 0
-
 	_, _, err = syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd), uintptr(syscall.TIOCSETA), uintptr(unsafe.Pointer(&termios)))
 	if err != 0 {
 		return errors.New("Error enabling raw mode")
@@ -330,11 +285,12 @@ func enableTermRawMode(fd int) error {
 func disableRawMode(fd int) error {
 	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd), uintptr(syscall.TIOCSETA), uintptr(unsafe.Pointer(&originalState)))
 	if err != 0 {
-		return errors.New("Erorr disabling raw mode")
+		return errors.New("Error disabling raw mode")
 	}
 	return nil
 }
 
 func StartInteractiveShell() {
-	main()
+	sh := NewShell()
+	sh.Start(tokenGroups)
 }
