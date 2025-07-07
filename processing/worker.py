@@ -1,12 +1,12 @@
 
 import json
+import sys
 import redis
-from os import getenv
-from typing import Optional
 import time
 import grpc
+import logging
+from os import getenv
 from pydantic import BaseModel
-from datetime import datetime
 
 import task_pb2
 import task_pb2_grpc
@@ -34,7 +34,7 @@ class Worker:
             self.stub = task_pb2_grpc.TaskServiceStub(channel)
 
     def process_task(self, int_task: IntTask):
-        print(
+        logging.info(
             f"✅ Processing task {int_task.id} - Payload: {int_task.task.payload}")
 
     def run(self):
@@ -47,7 +47,7 @@ class Worker:
                     continue
                 except grpc.RpcError as e:
                     if e.code() == grpc.StatusCode.NOT_FOUND:
-                        print("No task in queue")
+                        logging.info("No task in queue")
                     else:
                         raise
                     time.sleep(1)
@@ -60,14 +60,21 @@ class Worker:
                     task = IntTask(**task_dict)
                     self.process_task(task)
                 else:
-                    print("No task! Sleeping...")
+                    logging.info("No task! Sleeping...")
                     time.sleep(1)
             except Exception as e:
-                print(f"❌ Error processing task: {e}")
+                logging.error(f"❌ Error processing task: {e}")
                 time.sleep(1)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        filename='workers.log',
+        level=logging.INFO,
+        format='%(asctime)s - PID:%(process)d - %(message)s'
+    )
+
+    sys.stdout = open("workers.log", "a")
     MODE = getenv("MODE", "local").lower()
     is_local = MODE != "redis"
 
@@ -81,5 +88,6 @@ if __name__ == "__main__":
         rdb = redis.Redis(REDIS_HOST, REDIS_PORT, db=0)
         worker = Worker(rdb=rdb, is_local=False)
 
-    print(f"🚀 Starting worker in {'LOCAL' if is_local else 'REDIS'} mode...")
+    logging.info(
+        f"🚀 Starting worker in {'LOCAL' if is_local else 'REDIS'} mode...")
     worker.run()
