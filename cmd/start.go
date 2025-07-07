@@ -1,6 +1,11 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+
 	"github.com/Yulian302/qugopy/grpc"
 	"github.com/spf13/cobra"
 
@@ -12,13 +17,34 @@ var (
 	workers uint8
 )
 
+func RunApp(isProduction bool) {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	errCh := make(chan error, 2)
+
+	go func() { errCh <- StartApp(mode, isProduction) }()
+	go func() { errCh <- grpc.Start(isProduction) }()
+
+	if isProduction {
+		shell.StartInteractiveShell()
+	}
+
+	select {
+	case err := <-errCh:
+		fmt.Println("Service exited with error:", err)
+	case <-ctx.Done():
+		fmt.Println("Shutting down gracefully...")
+	}
+
+	stop()
+}
+
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the application",
 	Run: func(cmd *cobra.Command, args []string) {
-		go grpc.Start()
-		go StartApp(mode, true)
-		shell.StartInteractiveShell()
+		RunApp(true)
 	},
 }
 

@@ -9,10 +9,10 @@ import (
 func NewRouter(rdb *redis.Client) *gin.Engine {
 	router := gin.Default()
 
-	// router.Use(
-	// 	gin.Logger(),
-	// 	gin.Recovery(),
-	// )
+	router.Use(
+		gin.Logger(),
+		gin.Recovery(),
+	)
 
 	router.GET("/test", handlers.HealthCheckHandler)
 	router.POST("/tasks", handlers.TaskEnqueueHandler(rdb))
