@@ -1,10 +1,19 @@
-annotated-types @ file:///Users/builder/cbouss/perseverance-python-buildout/croot/annotated-types_1728588668736/work
-click @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_d2rtg2ejqc/croot/click_1744271604580/work
-pydantic @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_ac_4dmd4j4/croot/pydantic_1750769074322/work
-pydantic_core @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_9d3ads2bae/croot/pydantic-core_1750754745671/work
-python-dotenv @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_0bqseadoho/croot/python-dotenv_1745610246418/work
-redis @ file:///Users/ktietz/demo/mc3/conda-bld/redis_1629466498261/work
+annotated-types==0.6.0
+click==8.1.8
+grpcio==1.71.0
+grpcio-tools==1.71.0
+iniconfig==1.1.1
+packaging==24.2
+pip==25.1
+pluggy==1.5.0
+protobuf==5.29.3
+pydantic==2.11.7
+pydantic_core==2.33.2
+Pygments==2.19.1
+pytest==8.4.1
+python-dotenv==1.1.0
+redis==3.5.3
 setuptools==78.1.1
-typing-inspection @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_cdhsd2fkb6/croot/typing-inspection_1746023485130/work
-typing_extensions @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_0b3jpv_f79/croot/typing_extensions_1734714864260/work
+typing_extensions==4.12.2
+typing-inspection==0.4.0
 wheel==0.45.1
