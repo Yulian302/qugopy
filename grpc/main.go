@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net"
 
 	taskpb "github.com/Yulian302/qugopy/github.com/Yulian302/qugopy/proto"
@@ -54,17 +54,20 @@ func (s *Server) GetTask(ctx context.Context, _ *taskpb.Empty) (*taskpb.IntTask,
 	return ToProto(&t), nil
 }
 
-func Start() {
+func Start(isProduction bool) error {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("listen failed: %v", err)
+		return fmt.Errorf("gRPC listen failed: %w", err)
 	}
 	gs := grpc.NewServer()
 	taskpb.RegisterTaskServiceServer(gs, &Server{})
 
-	logging.DebugLog("gRPC listening on :50051")
+	if !isProduction {
+		logging.DebugLog("gRPC listening on :50051")
+	}
 
 	if err := gs.Serve(lis); err != nil {
-		log.Fatalf("serve failed: %v", err)
+		return fmt.Errorf("gRPC serve failed: %w", err)
 	}
+	return nil
 }
