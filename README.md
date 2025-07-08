@@ -3,7 +3,7 @@
 </p>
 
 # QugoPy
-
+[![Development Status](https://img.shields.io/badge/status-in_development-orange.svg)](https://github.com/yourusername/yourrepo)
 ![Go Version](https://img.shields.io/badge/go-1.23+-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-darkgreen)
 ![License](https://img.shields.io/github/license/Yulian302/qugopy)
@@ -15,6 +15,11 @@ Clients submit high-level tasks (e.g., email sending, report generation), and th
 
 # Features
 After starting the app via CLI, you can use either `CLI` or `REST API` to queue the tasks.
+## Interactive CLI
+TODO
+## REST API
+TODO
+
 
 # Requirements ✅
 Before building or running the project, ensure the following dependencies are installed:
