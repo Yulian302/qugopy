@@ -87,7 +87,7 @@ cd processing
 python -m venv venv --upgrade-deps
 .\venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### Verification
