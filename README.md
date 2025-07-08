@@ -29,7 +29,8 @@ Before building or running the project, ensure the following dependencies are in
 
 
 # Installation
-Follow the steps below to set up and build the project:
+Follow the steps **below** to set up and build the application.
+## Go Project Setup
 1. Navigate to your workspace
     ```bash
     cd your-directory
@@ -47,6 +48,56 @@ Follow the steps below to set up and build the project:
     go build -o qugopy
     ```
     This will produce an executable named `qugopy` in the project root.
+
+## Python Project Setup
+Follow these steps to setup Python environment:
+### Automated setup (Recommended)
+<p align="left"><b>Linux/MacOS</b></p>
+
+```bash
+cd processing
+chmod +x setup_python_env.sh # Ensure script is executable
+./setup_python_env.sh
+```
+<p align="left"><b>Windows</b></p>
+
+```powershell
+cd processing
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned # Allow execution
+./setup_python_env.ps1
+```
+
+**OR**
+
+### Manual Setup
+<p align="left"><b>Linux/MacOS</b></p>
+
+```bash
+cd processing
+python3 -m venv venv -upgrade-deps
+source venv/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
+<p align="left"><b>Windows</b></p>
+
+```powershell
+cd processing
+python -m venv venv --upgrade-deps
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
+### Verification
+After setup, verify your environment:
+```bash
+python -c "import sys; print(sys.executable)"  # Should point to venv Python
+pytest tests/  # Run basic tests if available
+```
+
+
 
 # Usage
 Once built, you can run the server using the following command:
