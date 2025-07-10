@@ -1,47 +1,28 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 
 	"github.com/Yulian302/qugopy/config"
 	"github.com/Yulian302/qugopy/internal/api"
-	"github.com/gin-gonic/gin"
+	w "github.com/Yulian302/qugopy/workers"
 	"github.com/go-redis/redis"
 )
 
 var rdb *redis.Client
-var ctx = context.Background()
 
-func StartApp(mode string, isProduction bool) error {
+func StartApp(mode string, workers int, isProduction bool) error {
 
-	cfg, err := config.LoadConfig()
-
+	wd := w.NewWorkerDistributor(rdb)
+	cancel, err := wd.DistributeWorkers(workers, mode, isProduction, rdb)
 	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		return fmt.Errorf("failed to distribute workers: %w", err)
 	}
-	if config.Mode(mode).IsValid() {
-		cfg.MODE = config.Mode(mode)
-	} else {
-		cfg.MODE = "local"
-	}
-
-	if isProduction {
-		gin.SetMode(gin.ReleaseMode)
-		f, _ := os.Create(fmt.Sprintf(filepath.Join(config.ProjectRootPath, "gin.log")))
-		gin.DefaultWriter = io.MultiWriter(f)
-	}
-
-	rdb = redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:%s", cfg.REDIS.HOST, cfg.REDIS.PORT),
-	})
+	defer cancel()
 
 	router := api.NewRouter(rdb)
 
-	if err := router.Run(fmt.Sprintf("%s:%s", cfg.HOST, cfg.PORT)); err != nil {
+	if err := router.Run(fmt.Sprintf("%s:%s", config.AppConfig.HOST, config.AppConfig.PORT)); err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
 

@@ -16,10 +16,10 @@ var (
 func TestMain(m *testing.M) {
 	q = &PriorityQueue{}
 	tasks = []*models.IntTask{
-		{ID: uuid.New().String(), Task: models.Task{Type: "python", Payload: "Task1", Priority: 5}},
-		{ID: uuid.New().String(), Task: models.Task{Type: "go", Payload: "Task2", Priority: 2}},
-		{ID: uuid.New().String(), Task: models.Task{Type: "python", Payload: "Task3", Priority: 3}},
-		{ID: uuid.New().String(), Task: models.Task{Type: "go", Payload: "Task4", Priority: 1}},
+		{ID: uuid.New().String(), Task: models.Task{Type: "python", Payload: []byte("Task1"), Priority: 5}},
+		{ID: uuid.New().String(), Task: models.Task{Type: "go", Payload: []byte("Task2"), Priority: 2}},
+		{ID: uuid.New().String(), Task: models.Task{Type: "python", Payload: []byte("Task3"), Priority: 3}},
+		{ID: uuid.New().String(), Task: models.Task{Type: "go", Payload: []byte("Task4"), Priority: 1}},
 	}
 	code := m.Run()
 	os.Exit(code)

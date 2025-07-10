@@ -33,7 +33,7 @@ func (m *MockWorker) ID() string { return m.id }
 func TestNewWorkerDistributor(t *testing.T) {
 	t.Parallel()
 
-	wd := NewWorkerDistributor()
+	wd := NewWorkerDistributor(nil)
 	assert.NotNil(t, wd.pyManager, "Python manager should be initialized")
 	assert.NotNil(t, wd.goManager, "Go manager should be initialized")
 }
@@ -42,8 +42,8 @@ func TestDistributeWorkers(t *testing.T) {
 	t.Parallel()
 
 	t.Run("SuccessfulDistribution", func(t *testing.T) {
-		wd := NewWorkerDistributor()
-		cancel, err := wd.DistributeWorkers(4, "local", false)
+		wd := NewWorkerDistributor(nil)
+		cancel, err := wd.DistributeWorkers(4, "local", false, nil)
 		require.NoError(t, err, "Should distribute workers successfully")
 		defer cancel()
 
@@ -52,8 +52,8 @@ func TestDistributeWorkers(t *testing.T) {
 	})
 
 	t.Run("OddWorkerCount", func(t *testing.T) {
-		wd := NewWorkerDistributor()
-		cancel, err := wd.DistributeWorkers(5, "local", false)
+		wd := NewWorkerDistributor(nil)
+		cancel, err := wd.DistributeWorkers(5, "local", false, nil)
 		require.NoError(t, err)
 		defer cancel()
 
@@ -62,14 +62,14 @@ func TestDistributeWorkers(t *testing.T) {
 	})
 
 	t.Run("InvalidWorkerCount", func(t *testing.T) {
-		wd := NewWorkerDistributor()
-		_, err := wd.DistributeWorkers(0, "local", false)
+		wd := NewWorkerDistributor(nil)
+		_, err := wd.DistributeWorkers(0, "local", false, nil)
 		assert.Error(t, err, "Should reject zero workers")
 	})
 
 	t.Run("CPUResourceLimit", func(t *testing.T) {
-		wd := NewWorkerDistributor()
-		_, err := wd.DistributeWorkers(9999, "local", false) // Exceeds core count
+		wd := NewWorkerDistributor(nil)
+		_, err := wd.DistributeWorkers(9999, "local", false, nil) // Exceeds core count
 		require.NoError(t, err)
 		assert.LessOrEqual(t, len(wd.pyManager.workers)+len(wd.goManager.workers), runtime.NumCPU())
 	})
@@ -79,19 +79,19 @@ func TestWorkerStartupFailures(t *testing.T) {
 	t.Parallel()
 
 	t.Run("PythonStartupFailure", func(t *testing.T) {
-		wd := NewWorkerDistributor()
+		wd := NewWorkerDistributor(nil)
 
 		// Replace manager with mock that fails
 		wd.pyManager = &WorkerManager{
 			workers: []Worker{&MockWorker{startErr: errors.New("python failed")}},
 		}
 
-		_, err := wd.DistributeWorkers(2, "local", false)
+		_, err := wd.DistributeWorkers(2, "local", false, nil)
 		assert.ErrorContains(t, err, "python worker startup failed")
 	})
 
 	t.Run("GoStartupFailure", func(t *testing.T) {
-		wd := NewWorkerDistributor()
+		wd := NewWorkerDistributor(nil)
 
 		// Setup successful Python workers
 		wd.pyManager.workers = []Worker{&MockWorker{id: "py1"}}
@@ -101,7 +101,7 @@ func TestWorkerStartupFailures(t *testing.T) {
 			workers: []Worker{&MockWorker{startErr: errors.New("go failed")}},
 		}
 
-		_, err := wd.DistributeWorkers(2, "redis", false)
+		_, err := wd.DistributeWorkers(2, "redis", false, nil)
 		assert.ErrorContains(t, err, "go worker startup failed")
 	})
 }
@@ -110,7 +110,7 @@ func TestShutdown(t *testing.T) {
 	t.Parallel()
 
 	t.Run("GracefulShutdown", func(t *testing.T) {
-		wd := NewWorkerDistributor()
+		wd := NewWorkerDistributor(nil)
 
 		// Setup mock workers
 		wd.pyManager.workers = []Worker{&MockWorker{id: "py1"}}
@@ -129,7 +129,7 @@ func TestShutdown(t *testing.T) {
 	})
 
 	t.Run("ShutdownTimeout", func(t *testing.T) {
-		wd := NewWorkerDistributor()
+		wd := NewWorkerDistributor(nil)
 		wd.wg.Add(1) // Block shutdown
 
 		err := wd.Shutdown()
@@ -140,7 +140,7 @@ func TestShutdown(t *testing.T) {
 func TestConcurrentOperations(t *testing.T) {
 	t.Parallel()
 
-	wd := NewWorkerDistributor()
+	wd := NewWorkerDistributor(nil)
 	var wg sync.WaitGroup
 
 	// Test concurrent AddWorker calls

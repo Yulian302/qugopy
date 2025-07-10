@@ -1,14 +1,21 @@
 package shell
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
+	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
 
+	"github.com/Yulian302/qugopy/internal/tasks"
 	"github.com/Yulian302/qugopy/internal/trie"
+	"github.com/Yulian302/qugopy/logging"
+	"github.com/Yulian302/qugopy/models"
+	"github.com/go-redis/redis"
 )
 
 type Shell struct {
@@ -87,11 +94,16 @@ func (sh *Shell) getInputTokens() []string {
 func (sh *Shell) getNextTokensFromTokenTrie(tokens []string) []string {
 	curr := sh.tokenTrie.Root
 	for _, token := range tokens {
-		next, ok := curr.Children[token]
-		if !ok {
-			return nil
+		if next, ok := curr.Children[token]; ok {
+			curr = next
+			continue
 		}
-		curr = next
+		if next, ok := curr.Children["*"]; ok {
+			curr = next
+			continue
+		}
+
+		return nil
 	}
 	result := make([]string, 0, len(curr.Children))
 	for child := range curr.Children {
@@ -183,12 +195,15 @@ func (sh *Shell) handleShowSuggestions() {
 		if len(tokens) == 0 {
 			sh.runeSuggestions = sh.runeTrie.GetAllWords(1)
 		} else if len(sh.wordInput) > 0 {
-			sh.runeSuggestions = sh.runeTrie.SearchPrefix(string(sh.wordInput), true, sh.currGroup)
+			word := string(sh.wordInput)
+			if strings.ContainsAny(word, "*?") {
+				sh.runeSuggestions = sh.runeTrie.FuzzySearch(word, sh.currGroup)
+			} else {
+				sh.runeSuggestions = sh.runeTrie.SearchPrefix(word, true, sh.currGroup)
+			}
 		} else {
 			nextTokens := sh.getNextTokensFromTokenTrie(tokens)
-			for _, allowed := range nextTokens {
-				sh.runeSuggestions = append(sh.runeSuggestions, allowed)
-			}
+			sh.runeSuggestions = append(sh.runeSuggestions, nextTokens...)
 		}
 
 		suggestionMap := map[string]struct{}{}
@@ -208,7 +223,114 @@ func (sh *Shell) handleShowSuggestions() {
 	}
 }
 
-func (sh *Shell) Start(tokenGroups [][]string) {
+func splitCommandLine(input string) []string {
+	var args []string
+	var buf strings.Builder
+	var inQuote rune
+	escaped := false
+
+	for _, r := range input {
+		switch {
+		case escaped:
+			buf.WriteRune(r)
+			escaped = false
+		case r == '\\':
+			escaped = true
+		case inQuote != 0:
+			if r == inQuote {
+				inQuote = 0
+			} else {
+				buf.WriteRune(r)
+			}
+		case r == '"' || r == '\'':
+			inQuote = r
+		case r == ' ' || r == '\t':
+			if buf.Len() > 0 {
+				args = append(args, buf.String())
+				buf.Reset()
+			}
+		default:
+			buf.WriteRune(r)
+		}
+	}
+
+	if buf.Len() > 0 {
+		args = append(args, buf.String())
+	}
+	return args
+}
+
+func parseArgs(line string) map[string]string {
+	args := map[string]string{}
+	tokens := splitCommandLine(line)
+
+	for i := 0; i < len(tokens); i++ {
+		if strings.HasPrefix(tokens[i], "--") {
+			key := strings.TrimPrefix(tokens[i], "--")
+			if i+1 < len(tokens) && !strings.HasPrefix(tokens[i+1], "--") {
+				args[key] = tokens[i+1]
+				i++
+			} else {
+				args[key] = "" // handle flag without value
+			}
+		}
+	}
+	return args
+}
+
+func parseTaskFromCmd(line string) (models.Task, error) {
+	args := parseArgs(line)
+
+	task := models.Task{}
+	taskValue := reflect.ValueOf(&task).Elem()
+	taskType := taskValue.Type()
+
+	for i := 0; i < taskValue.NumField(); i++ {
+		field := taskType.Field(i)
+		jsonTag := field.Tag.Get("json")
+		if !field.IsExported() {
+			continue
+		}
+
+		rawValue, ok := args[jsonTag]
+		if !ok {
+			continue
+		}
+
+		fieldValue := taskValue.Field(i)
+		fieldType := field.Type
+
+		switch fieldType.Kind() {
+		case reflect.String:
+			fieldValue.SetString(rawValue)
+
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if intVal, err := strconv.ParseInt(rawValue, 10, 64); err == nil {
+				fieldValue.SetInt(intVal)
+			} else {
+				return models.Task{}, fmt.Errorf("⚠️ Int parse error for %s: %v\n", jsonTag, err)
+			}
+
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			if uintVal, err := strconv.ParseUint(rawValue, 10, 64); err == nil {
+				fieldValue.SetUint(uintVal)
+			} else {
+				return models.Task{}, fmt.Errorf("⚠️ Uint parse error for %s: %v\n", jsonTag, err)
+			}
+
+		default:
+			if fieldType == reflect.TypeOf(json.RawMessage{}) {
+				fieldValue.Set(reflect.ValueOf(json.RawMessage(rawValue)))
+			} else {
+				return models.Task{}, fmt.Errorf("⚠️ Unknown field type for %s: %v\n", jsonTag, fieldType)
+			}
+		}
+	}
+
+	return task, nil
+}
+
+func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 	fd := int(os.Stdin.Fd())
 	if err := enableTermRawMode(fd); err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to enter raw mode:", err)
@@ -260,7 +382,17 @@ func (sh *Shell) Start(tokenGroups [][]string) {
 			fmt.Println("Goodbye...")
 			break
 		}
-		fmt.Println("You typed:", line)
+		task, err := parseTaskFromCmd(line)
+		if err != nil {
+			fmt.Println("Could not process task!")
+			fmt.Printf("Error: %v\n", err)
+		}
+		if err := tasks.EnqueueTask(task, rdb); err != nil {
+			logging.DebugLog(fmt.Sprintf("task could not be added: %v", err))
+			fmt.Printf("Invalid task: %s\n", line)
+			continue
+		}
+		fmt.Println("Task added successfully!")
 	}
 }
 
@@ -290,7 +422,7 @@ func disableRawMode(fd int) error {
 	return nil
 }
 
-func StartInteractiveShell() {
+func StartInteractiveShell(rdb *redis.Client) {
 	sh := NewShell()
-	sh.Start(tokenGroups)
+	sh.Start(tokenGroups, rdb)
 }

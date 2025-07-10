@@ -54,7 +54,7 @@ func (s *Server) GetTask(ctx context.Context, _ *taskpb.Empty) (*taskpb.IntTask,
 	return ToProto(&t), nil
 }
 
-func Start(isProduction bool) error {
+func Start() error {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		return fmt.Errorf("gRPC listen failed: %w", err)
@@ -62,9 +62,7 @@ func Start(isProduction bool) error {
 	gs := grpc.NewServer()
 	taskpb.RegisterTaskServiceServer(gs, &Server{})
 
-	if !isProduction {
-		logging.DebugLog("gRPC listening on :50051")
-	}
+	logging.DebugLog("gRPC listening on :50051")
 
 	if err := gs.Serve(lis); err != nil {
 		return fmt.Errorf("gRPC serve failed: %w", err)

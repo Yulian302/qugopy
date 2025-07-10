@@ -21,7 +21,7 @@ message IntTask {
 message Task {
   string type = 1;
 
-  string payload = 2;
+  bytes payload = 2;
 
   uint32 priority = 3;
 
