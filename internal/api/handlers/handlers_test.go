@@ -78,25 +78,25 @@ func TestEnqueueHandlerRedis_EdgeCases(t *testing.T) {
 	}{
 		{
 			name:       "valid task",
-			body:       `{"type": "email", "payload": "test", "priority": 10}`,
+			body:       `{"type": "download_file", "payload": "test", "priority": 10}`,
 			wantStatus: 201,
 			wantBody:   "Task enqueued",
 		},
 		{
 			name:       "missing type field",
-			body:       `{"payload": "test", "priority": 10}`,
+			body:       `{"payload": "download_file", "priority": 10}`,
 			wantStatus: 400,
 			wantBody:   "Invalid request payload",
 		},
 		{
 			name:       "invalid priority",
-			body:       `{"payload": "test", "priority": -1}`,
+			body:       `{"payload": "payload", "priority": -1}`,
 			wantStatus: 400,
 			wantBody:   "Invalid request payload",
 		},
 		{
 			name:       "invalid json",
-			body:       `{"type": "email",`,
+			body:       `{"type": "download_file",`,
 			wantStatus: 400,
 			wantBody:   "Invalid request payload",
 		},
@@ -121,7 +121,7 @@ func TestEnqueueHandlerRedis_EdgeCases(t *testing.T) {
 				if err := json.Unmarshal([]byte(res[0].Member.(string)), &task); err != nil {
 					log.Fatal(err)
 				}
-				assert.Equal(t, task.Task.Type, "email")
+				assert.Equal(t, task.Task.Type, "download_file")
 			}
 		})
 	}
@@ -141,7 +141,7 @@ func TestEnqueueHandlerLocal_EdgeCases(t *testing.T) {
 	}{
 		{
 			name:       "valid task",
-			body:       `{"type": "email", "payload": "test", "priority": 10}`,
+			body:       `{"type": "download_file", "payload": "test", "priority": 10}`,
 			wantStatus: 201,
 			wantBody:   "Task enqueued",
 		},
@@ -159,7 +159,7 @@ func TestEnqueueHandlerLocal_EdgeCases(t *testing.T) {
 		},
 		{
 			name:       "invalid json",
-			body:       `{"type": "email",`,
+			body:       `{"type": "download_file",`,
 			wantStatus: 400,
 			wantBody:   "Invalid request payload",
 		},
@@ -180,7 +180,7 @@ func TestEnqueueHandlerLocal_EdgeCases(t *testing.T) {
 			if tt.wantStatus == 201 {
 				head, exists := queue.DefaultLocalQueue.PQ.Pop()
 				assert.Equal(t, true, exists)
-				assert.Equal(t, head.Task.Type, "email")
+				assert.Equal(t, head.Task.Type, "download_file")
 			}
 		})
 	}

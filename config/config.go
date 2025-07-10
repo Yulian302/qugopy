@@ -32,10 +32,11 @@ type RedisConfig struct {
 }
 
 type RootConfig struct {
-	HOST  string
-	PORT  string
-	REDIS RedisConfig
-	MODE  Mode
+	HOST    string
+	PORT    string
+	REDIS   RedisConfig
+	MODE    string
+	WORKERS int
 }
 
 func LoadConfig() (*RootConfig, error) {
@@ -51,6 +52,8 @@ func LoadConfig() (*RootConfig, error) {
 			HOST: os.Getenv("REDIS_HOST"),
 			PORT: os.Getenv("REDIS_PORT"),
 		},
+		MODE:    "local",
+		WORKERS: 2,
 	}
 
 	if cfg.HOST == "" || cfg.PORT == "" {
@@ -60,4 +63,4 @@ func LoadConfig() (*RootConfig, error) {
 	return cfg, nil
 }
 
-var AppConfig *RootConfig
+var AppConfig *RootConfig = &RootConfig{}

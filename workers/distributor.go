@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"runtime"
@@ -9,6 +10,10 @@ import (
 	"time"
 
 	"github.com/Yulian302/qugopy/config"
+	"github.com/Yulian302/qugopy/internal/queue"
+	"github.com/Yulian302/qugopy/internal/tasks"
+	"github.com/Yulian302/qugopy/logging"
+	"github.com/go-redis/redis"
 	"github.com/google/uuid"
 )
 
@@ -18,19 +23,21 @@ type WorkerDistributor struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	wg        sync.WaitGroup
+	rdb       *redis.Client
 }
 
-func NewWorkerDistributor() *WorkerDistributor {
+func NewWorkerDistributor(rdb *redis.Client) *WorkerDistributor {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &WorkerDistributor{
 		pyManager: NewWorkerManager(),
 		goManager: NewWorkerManager(),
 		ctx:       ctx,
 		cancel:    cancel,
+		rdb:       rdb,
 	}
 }
 
-func (wd *WorkerDistributor) DistributeWorkers(totalWorkers int, mode string, isProduction bool) (context.CancelFunc, error) {
+func (wd *WorkerDistributor) DistributeWorkers(totalWorkers int, mode string, isProduction bool, rdb *redis.Client) (context.CancelFunc, error) {
 	if totalWorkers < 1 {
 		return nil, fmt.Errorf("totalWorkers must be at least 1")
 	}
@@ -59,12 +66,42 @@ func (wd *WorkerDistributor) DistributeWorkers(totalWorkers int, mode string, is
 		wd.goManager.AddWorker(NewGoWorker(
 			uuid.New().String(),
 			func(ctx context.Context) error {
-				select {
-				case <-ctx.Done():
-					return nil
-				default:
-					// TODO
-					return nil
+				for {
+					select {
+					case <-ctx.Done():
+						return nil
+					default:
+						var task queue.IntTask
+						var exists bool
+
+						if mode == "redis" {
+							res, err := rdb.ZPopMin("task_queue", 1).Result()
+							if err != nil || len(res) == 0 {
+								time.Sleep(100 * time.Millisecond)
+								continue
+							}
+							if err := json.Unmarshal([]byte(res[0].Member.(string)), &task); err != nil {
+								// skip task
+								fmt.Printf("Failed to unmarshal task: %v. Raw: %s\n", err, res[0].Member)
+								time.Sleep(100 * time.Millisecond)
+								continue
+							}
+
+						} else {
+							task, exists = queue.DefaultLocalQueue.PQ.Pop()
+							// queue is empty
+							if !exists {
+								time.Sleep(100 * time.Millisecond)
+								continue
+							}
+						}
+
+						err := tasks.DispatchTask(ctx, task)
+						if err != nil {
+							logging.DebugLog(fmt.Sprintf("could not complete task (id=%s): %v", task.ID, err))
+							continue
+						}
+					}
 				}
 			},
 		))

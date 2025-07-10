@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	_ "github.com/go-playground/validator"
@@ -8,10 +9,10 @@ import (
 
 type Task struct {
 	// Type categorizes the task (e.g., "email", "notification").
-	Type string `form:"type" json:"type" binding:"required,oneof=email pdf print"`
+	Type string `form:"type" json:"type" binding:"required,oneof=download_file"`
 
 	// Payload contains task-specific data in string format.
-	Payload string `form:"payload" json:"payload" binding:"required"`
+	Payload json.RawMessage `form:"payload" json:"payload" binding:"required"`
 
 	// Priority determines execution order (higher values = higher priority).
 	// Range: 0-65535 (uint16)

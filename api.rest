@@ -43,28 +43,20 @@ Content-Type: application/json
     "priority":1
 }
 
-
 ###
-// test mode is present and valid (to redis)
+// test mode is present and valid
 POST http://127.0.0.1:5000/tasks HTTP/1.1
 Content-Type: application/json
 
 {
-    "type":"email",
-    "payload":"payload",
+    "type":"download_file",
+    "payload":{
+        "url":"https://jsonplaceholder.typicode.com/todos/1",
+        "filename":"dummy.json"
+    },
     "priority":1
 }
 
 
-###
-// test mode is present and valid (to local)
-POST http://127.0.0.1:5000/tasks HTTP/1.1
-Content-Type: application/json
-
-{
-    "type":"print",
-    "payload":"padyload",
-    "priority":5
-}
-
-
+# cmd
+// add task --type download_file --payload '{"url":"https://jsonplaceholder.typicode.com/todos/1","filename":"dummy.json"}' --priority 1

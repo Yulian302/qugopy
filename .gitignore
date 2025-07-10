@@ -16,3 +16,6 @@ __pycache__
 
 # debugging
 .vscode
+
+# local storage
+storage

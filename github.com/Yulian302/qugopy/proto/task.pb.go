@@ -23,10 +23,62 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type IntTask struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Task          *Task                  `protobuf:"bytes,2,opt,name=task,proto3" json:"task,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IntTask) Reset() {
+	*x = IntTask{}
+	mi := &file_task_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntTask) ProtoMessage() {}
+
+func (x *IntTask) ProtoReflect() protoreflect.Message {
+	mi := &file_task_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntTask.ProtoReflect.Descriptor instead.
+func (*IntTask) Descriptor() ([]byte, []int) {
+	return file_task_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *IntTask) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *IntTask) GetTask() *Task {
+	if x != nil {
+		return x.Task
+	}
+	return nil
+}
+
 type Task struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Payload       string                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload       []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
 	Priority      uint32                 `protobuf:"varint,3,opt,name=priority,proto3" json:"priority,omitempty"`
 	Deadline      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=deadline,proto3" json:"deadline,omitempty"`
 	Recurring     *wrapperspb.BoolValue  `protobuf:"bytes,5,opt,name=recurring,proto3" json:"recurring,omitempty"`
@@ -36,7 +88,7 @@ type Task struct {
 
 func (x *Task) Reset() {
 	*x = Task{}
-	mi := &file_task_proto_msgTypes[0]
+	mi := &file_task_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +100,7 @@ func (x *Task) String() string {
 func (*Task) ProtoMessage() {}
 
 func (x *Task) ProtoReflect() protoreflect.Message {
-	mi := &file_task_proto_msgTypes[0]
+	mi := &file_task_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +113,7 @@ func (x *Task) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Task.ProtoReflect.Descriptor instead.
 func (*Task) Descriptor() ([]byte, []int) {
-	return file_task_proto_rawDescGZIP(), []int{0}
+	return file_task_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Task) GetType() string {
@@ -71,11 +123,11 @@ func (x *Task) GetType() string {
 	return ""
 }
 
-func (x *Task) GetPayload() string {
+func (x *Task) GetPayload() []byte {
 	if x != nil {
 		return x.Payload
 	}
-	return ""
+	return nil
 }
 
 func (x *Task) GetPriority() uint32 {
@@ -95,58 +147,6 @@ func (x *Task) GetDeadline() *timestamppb.Timestamp {
 func (x *Task) GetRecurring() *wrapperspb.BoolValue {
 	if x != nil {
 		return x.Recurring
-	}
-	return nil
-}
-
-type IntTask struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Task          *Task                  `protobuf:"bytes,2,opt,name=task,proto3" json:"task,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *IntTask) Reset() {
-	*x = IntTask{}
-	mi := &file_task_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IntTask) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IntTask) ProtoMessage() {}
-
-func (x *IntTask) ProtoReflect() protoreflect.Message {
-	mi := &file_task_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IntTask.ProtoReflect.Descriptor instead.
-func (*IntTask) Descriptor() ([]byte, []int) {
-	return file_task_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *IntTask) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *IntTask) GetTask() *Task {
-	if x != nil {
-		return x.Task
 	}
 	return nil
 }
@@ -192,17 +192,17 @@ var File_task_proto protoreflect.FileDescriptor
 const file_task_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"task.proto\x12\x04task\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"\xc2\x01\n" +
-	"\x04Task\x12\x12\n" +
-	"\x04type\x18\x01 \x01(\tR\x04type\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\tR\apayload\x12\x1a\n" +
-	"\bpriority\x18\x03 \x01(\rR\bpriority\x126\n" +
-	"\bdeadline\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bdeadline\x128\n" +
-	"\trecurring\x18\x05 \x01(\v2\x1a.google.protobuf.BoolValueR\trecurring\"9\n" +
+	"task.proto\x12\x04task\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"9\n" +
 	"\aIntTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
 	"\x04task\x18\x02 \x01(\v2\n" +
-	".task.TaskR\x04task\"\a\n" +
+	".task.TaskR\x04task\"\xc2\x01\n" +
+	"\x04Task\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x12\x18\n" +
+	"\apayload\x18\x02 \x01(\fR\apayload\x12\x1a\n" +
+	"\bpriority\x18\x03 \x01(\rR\bpriority\x126\n" +
+	"\bdeadline\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bdeadline\x128\n" +
+	"\trecurring\x18\x05 \x01(\v2\x1a.google.protobuf.BoolValueR\trecurring\"\a\n" +
 	"\x05Empty24\n" +
 	"\vTaskService\x12%\n" +
 	"\aGetTask\x12\v.task.Empty\x1a\r.task.IntTaskB*Z(github.com/Yulian302/qugopy/proto;taskpbb\x06proto3"
@@ -221,18 +221,18 @@ func file_task_proto_rawDescGZIP() []byte {
 
 var file_task_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_task_proto_goTypes = []any{
-	(*Task)(nil),                  // 0: task.Task
-	(*IntTask)(nil),               // 1: task.IntTask
+	(*IntTask)(nil),               // 0: task.IntTask
+	(*Task)(nil),                  // 1: task.Task
 	(*Empty)(nil),                 // 2: task.Empty
 	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 	(*wrapperspb.BoolValue)(nil),  // 4: google.protobuf.BoolValue
 }
 var file_task_proto_depIdxs = []int32{
-	3, // 0: task.Task.deadline:type_name -> google.protobuf.Timestamp
-	4, // 1: task.Task.recurring:type_name -> google.protobuf.BoolValue
-	0, // 2: task.IntTask.task:type_name -> task.Task
+	1, // 0: task.IntTask.task:type_name -> task.Task
+	3, // 1: task.Task.deadline:type_name -> google.protobuf.Timestamp
+	4, // 2: task.Task.recurring:type_name -> google.protobuf.BoolValue
 	2, // 3: task.TaskService.GetTask:input_type -> task.Empty
-	1, // 4: task.TaskService.GetTask:output_type -> task.IntTask
+	0, // 4: task.TaskService.GetTask:output_type -> task.IntTask
 	4, // [4:5] is the sub-list for method output_type
 	3, // [3:4] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
