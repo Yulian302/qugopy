@@ -104,7 +104,8 @@ func (sh *Shell) getNextTokensFromTokenTrie(tokens []string) []string {
 		if next, ok := curr.Children[token]; ok {
 			curr = next
 			continue
-      
+		}
+
 		if next, ok := curr.Children["*"]; ok {
 			curr = next
 			continue
@@ -212,7 +213,6 @@ func (sh *Shell) redrawInput() {
 	}
 }
 func (sh *Shell) handleAppendChar(b byte) {
-	// 🛡️ Defensive check to avoid out-of-range panic
 	if sh.cursorPos > len(sh.input) {
 		sh.cursorPos = len(sh.input)
 	}
@@ -476,7 +476,7 @@ func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 			break
 		}
 		sh.history.Add(line)
-    
+
 		task, err := parseTaskFromCmd(line)
 		if err != nil {
 			fmt.Println("Could not process task!")
