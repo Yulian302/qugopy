@@ -12,6 +12,7 @@ var (
 	CTRL_C           = uint8(3)
 	OPTION_BACKSPACE = uint8(23)
 	SPACE            = uint8(32)
+	ESC              = 0x1b
 	CMD_BACKSPACE    = uint8(21)
 	HORIZONTAL_TAB   = uint8(9)
 
@@ -22,6 +23,7 @@ var (
 	MOVE_CURSOR_DOWN_LEFT = []byte("\033[1E")
 	ERASE_ENTIRE_LINE     = []byte("\033[2K")
 	ERASE_CHAR            = []byte("\b \b")
+	CLEAR_SCREEN          = []byte("\033[H\033[2J")
 	//moves cursor to beginning of previous line, # lines up
 	MOVE_CURSOR_PREV_N_BEG = "\033[%dF"
 )

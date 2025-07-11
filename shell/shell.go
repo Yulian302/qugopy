@@ -15,6 +15,7 @@ import (
 	"github.com/Yulian302/qugopy/internal/trie"
 	"github.com/Yulian302/qugopy/logging"
 	"github.com/Yulian302/qugopy/models"
+	"github.com/Yulian302/qugopy/shell/internal"
 	"github.com/go-redis/redis"
 )
 
@@ -25,9 +26,11 @@ type Shell struct {
 	isChangedInput         bool
 	currGroup              int
 	lastSuggestionsPrinted int
+	cursorPos              int
 
 	tokenTrie *trie.TrieToken
 	runeTrie  *trie.TrieRune
+	history   *internal.RingBuffer
 }
 
 func NewShell() *Shell {
@@ -36,18 +39,22 @@ func NewShell() *Shell {
 		wordInput:      make([]byte, 0, 64),
 		tokenTrie:      trie.NewTokenTrie(),
 		runeTrie:       trie.NewRuneTrie(),
+		history:        internal.NewRingBuffer(50),
 		isChangedInput: true,
 		currGroup:      0,
+		cursorPos:      0,
 	}
 }
 
 func (sh *Shell) EraseCharacter(stdout bool) {
-	if len(sh.input) == 0 {
+	if sh.cursorPos == 0 {
 		return
 	}
-	sh.input = sh.input[:len(sh.input)-1]
+	sh.input = append(sh.input[:sh.cursorPos-1], sh.input[sh.cursorPos:]...)
+	sh.cursorPos--
+
 	if stdout {
-		os.Stdout.Write(ERASE_CHAR)
+		sh.redrawInput()
 	}
 }
 
@@ -112,12 +119,25 @@ func (sh *Shell) getNextTokensFromTokenTrie(tokens []string) []string {
 	return result
 }
 
-func (sh *Shell) getLastWord() []byte {
-	words := strings.Fields(string(sh.input))
-	if len(words) == 0 {
+func (sh *Shell) getWordUnderCursor() []byte {
+	if len(sh.input) == 0 || sh.cursorPos > len(sh.input) {
 		return nil
 	}
-	return []byte(words[len(words)-1])
+
+	start := sh.cursorPos
+	end := sh.cursorPos
+
+	// Go left to find start of word
+	for start > 0 && sh.input[start-1] != ' ' {
+		start--
+	}
+
+	// Go right to find end of word
+	for end < len(sh.input) && sh.input[end] != ' ' {
+		end++
+	}
+
+	return sh.input[start:end]
 }
 
 func (sh *Shell) populateRuneTrie(tokenGroups [][]string) {
@@ -146,7 +166,7 @@ func (sh *Shell) populateRuneTrie(tokenGroups [][]string) {
 
 func (sh *Shell) handleBackspace() {
 	sh.EraseCharacter(true)
-	sh.wordInput = sh.getLastWord()
+	sh.wordInput = sh.getWordUnderCursor()
 	sh.isChangedInput = true
 	sh.eraseSuggestions(sh.lastSuggestionsPrinted)
 }
@@ -154,7 +174,7 @@ func (sh *Shell) handleBackspace() {
 func (sh *Shell) handleEraseWord() {
 	for len(sh.input) > 0 && sh.input[len(sh.input)-1] != SPACE {
 		sh.EraseCharacter(true)
-		sh.wordInput = sh.getLastWord()
+		sh.wordInput = sh.getWordUnderCursor()
 	}
 	for len(sh.input) > 0 && sh.input[len(sh.input)-1] == SPACE {
 		sh.EraseCharacter(true)
@@ -175,52 +195,80 @@ func (sh *Shell) handleEraseAll() {
 	sh.isChangedInput = true
 }
 
-func (sh *Shell) handleAppendChar(b byte, buffer []byte) {
-	sh.input = append(sh.input, b)
-	sh.wordInput = append(sh.wordInput, b)
-	if b == SPACE {
-		sh.wordInput = sh.wordInput[:0]
+func (sh *Shell) redrawInput() {
+	// Move cursor to start of line
+	fmt.Print("\rqugopy> ")
+
+	// Print full input
+	os.Stdout.Write(sh.input)
+
+	// Clear any leftovers if shrinking
+	fmt.Print("\033[K")
+
+	// Move cursor back to proper position
+	back := len(sh.input) - sh.cursorPos
+	if back > 0 {
+		fmt.Printf("\033[%dD", back) // move left N times
 	}
+}
+func (sh *Shell) handleAppendChar(b byte) {
+	// 🛡️ Defensive check to avoid out-of-range panic
+	if sh.cursorPos > len(sh.input) {
+		sh.cursorPos = len(sh.input)
+	}
+
+	sh.input = append(sh.input[:sh.cursorPos], append([]byte{b}, sh.input[sh.cursorPos:]...)...)
+	sh.cursorPos++
+
+	sh.wordInput = sh.getWordUnderCursor()
 	sh.isChangedInput = true
+
 	sh.eraseSuggestions(sh.lastSuggestionsPrinted)
-	os.Stdout.Write(buffer)
+	sh.redrawInput()
 }
 
 func (sh *Shell) handleShowSuggestions() {
-	if sh.isChangedInput {
-		tokens := sh.getInputTokens()
-		sh.currGroup = len(tokens)
-
-		sh.runeSuggestions = nil
-		if len(tokens) == 0 {
-			sh.runeSuggestions = sh.runeTrie.GetAllWords(1)
-		} else if len(sh.wordInput) > 0 {
-			word := string(sh.wordInput)
-			if strings.ContainsAny(word, "*?") {
-				sh.runeSuggestions = sh.runeTrie.FuzzySearch(word, sh.currGroup)
-			} else {
-				sh.runeSuggestions = sh.runeTrie.SearchPrefix(word, true, sh.currGroup)
-			}
-		} else {
-			nextTokens := sh.getNextTokensFromTokenTrie(tokens)
-			sh.runeSuggestions = append(sh.runeSuggestions, nextTokens...)
-		}
-
-		suggestionMap := map[string]struct{}{}
-		for _, s := range sh.runeSuggestions {
-			suggestionMap[s] = struct{}{}
-		}
-		allSuggestions := make([]string, 0, len(suggestionMap))
-		for s := range suggestionMap {
-			allSuggestions = append(allSuggestions, s)
-		}
-
-		sh.eraseSuggestions(sh.lastSuggestionsPrinted)
-		sh.printSuggestions(allSuggestions)
-		sh.lastSuggestionsPrinted = len(allSuggestions)
-
-		sh.isChangedInput = false
+	if !sh.isChangedInput {
+		return
 	}
+
+	tokens := sh.getInputTokens()
+	sh.currGroup = len(tokens)
+
+	if sh.cursorPos < len(sh.input) && sh.input[sh.cursorPos] != ' ' {
+		// if inside a word, subtract 1 to keep currGroup accurate
+		sh.currGroup--
+	}
+
+	sh.runeSuggestions = nil
+	if len(tokens) == 0 {
+		sh.runeSuggestions = sh.runeTrie.GetAllWords(1)
+	} else if len(sh.wordInput) > 0 {
+		word := string(sh.wordInput)
+		if strings.ContainsAny(word, "*?") {
+			sh.runeSuggestions = sh.runeTrie.FuzzySearch(word, sh.currGroup)
+		} else {
+			sh.runeSuggestions = sh.runeTrie.SearchPrefix(word, true, sh.currGroup)
+		}
+	} else {
+		nextTokens := sh.getNextTokensFromTokenTrie(tokens)
+		sh.runeSuggestions = append(sh.runeSuggestions, nextTokens...)
+	}
+
+	suggestionMap := map[string]struct{}{}
+	for _, s := range sh.runeSuggestions {
+		suggestionMap[s] = struct{}{}
+	}
+	allSuggestions := make([]string, 0, len(suggestionMap))
+	for s := range suggestionMap {
+		allSuggestions = append(allSuggestions, s)
+	}
+
+	sh.eraseSuggestions(sh.lastSuggestionsPrinted)
+	sh.printSuggestions(allSuggestions)
+	sh.lastSuggestionsPrinted = len(allSuggestions)
+
+	sh.isChangedInput = false
 }
 
 func splitCommandLine(input string) []string {
@@ -357,6 +405,7 @@ func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 				return
 			}
 			b := buffer[0]
+
 			switch b {
 			case ENTER_1, ENTER_2:
 				break OuterLoop
@@ -371,8 +420,52 @@ func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 				sh.handleShowSuggestions()
 			case CMD_BACKSPACE:
 				sh.handleEraseAll()
+			case byte(ESC):
+				escSeq := make([]byte, 2)
+				_, err := os.Stdin.Read(escSeq)
+				if err != nil {
+					continue
+				}
+				switch string(append([]byte{0x1b}, escSeq...)) {
+				// left
+				case "\x1b[D":
+					if sh.cursorPos > 0 {
+						sh.cursorPos--
+						fmt.Print("\033[D")
+					}
+				// right
+				case "\x1b[C":
+					if sh.cursorPos < len(sh.input) {
+						sh.cursorPos++
+						fmt.Print("\033[C")
+					}
+				// up
+				case "\x1b[A":
+					if cmd, ok := sh.history.Prev(); ok {
+						sh.input = []byte(cmd)
+						sh.cursorPos = len(sh.input)
+						sh.redrawInput()
+					}
+				// down
+				case "\x1b[B":
+					if cmd, ok := sh.history.Next(); ok {
+						sh.input = []byte(cmd)
+						sh.cursorPos = len(sh.input)
+						sh.redrawInput()
+					} else {
+						sh.input = sh.input[:0]
+						sh.cursorPos = 0
+						sh.redrawInput()
+					}
+				// clear screen
+				case "\x1bc":
+					fmt.Print(CLEAR_SCREEN)
+					sh.redrawInput()
+					continue
+				}
+
 			default:
-				sh.handleAppendChar(b, buffer)
+				sh.handleAppendChar(b)
 			}
 		}
 
@@ -382,6 +475,8 @@ func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 			fmt.Println("Goodbye...")
 			break
 		}
+		sh.history.Add(line)
+
 		task, err := parseTaskFromCmd(line)
 		if err != nil {
 			fmt.Println("Could not process task!")
@@ -389,7 +484,10 @@ func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 		}
 		if err := tasks.EnqueueTask(task, rdb); err != nil {
 			logging.DebugLog(fmt.Sprintf("task could not be added: %v", err))
-			fmt.Printf("Invalid task: %s\n", line)
+			if len(sh.input) == 0 {
+				fmt.Println("(empty)")
+			}
+			fmt.Printf("Invalid command: %s\n", line)
 			continue
 		}
 		fmt.Println("Task added successfully!")
@@ -425,4 +523,5 @@ func disableRawMode(fd int) error {
 func StartInteractiveShell(rdb *redis.Client) {
 	sh := NewShell()
 	sh.Start(tokenGroups, rdb)
+	os.Exit(0)
 }
