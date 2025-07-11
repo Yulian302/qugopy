@@ -104,7 +104,7 @@ func (sh *Shell) getNextTokensFromTokenTrie(tokens []string) []string {
 		if next, ok := curr.Children[token]; ok {
 			curr = next
 			continue
-		}
+      
 		if next, ok := curr.Children["*"]; ok {
 			curr = next
 			continue
@@ -476,7 +476,7 @@ func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 			break
 		}
 		sh.history.Add(line)
-
+    
 		task, err := parseTaskFromCmd(line)
 		if err != nil {
 			fmt.Println("Could not process task!")
@@ -484,6 +484,7 @@ func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 		}
 		if err := tasks.EnqueueTask(task, rdb); err != nil {
 			logging.DebugLog(fmt.Sprintf("task could not be added: %v", err))
+
 			if len(sh.input) == 0 {
 				fmt.Println("(empty)")
 			}
