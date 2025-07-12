@@ -20,6 +20,12 @@ func DispatchTask(ctx context.Context, intTask models.IntTask) error {
 		}
 
 		return handlers.DownloadFile(ctx, payload.Url, payload.Filename)
+	case "send_email":
+		var payload handlers.EmailPayload
+		if err := json.Unmarshal([]byte(intTask.Task.Payload), &payload); err != nil {
+			return fmt.Errorf("invalid payload for send_email: %w", err)
+		}
+		return handlers.SendEmail(payload.ClientName, payload.ClientEmail, payload.RecipientName, payload.RecipientEmail, payload.Subject, payload.HtmlContent)
 	default:
 		return fmt.Errorf("unknown task type: %s", task.Type)
 	}

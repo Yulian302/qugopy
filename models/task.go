@@ -9,7 +9,7 @@ import (
 
 type Task struct {
 	// Type categorizes the task (e.g., "email", "notification").
-	Type string `form:"type" json:"type" binding:"required,oneof=download_file"`
+	Type string `form:"type" json:"type" binding:"required,oneof=download_file send_email"`
 
 	// Payload contains task-specific data in string format.
 	Payload json.RawMessage `form:"payload" json:"payload" binding:"required"`

@@ -31,10 +31,17 @@ type RedisConfig struct {
 	PORT string
 }
 
+type BrevoConfig struct {
+	URL     string
+	API_KEY string
+	EMAIL   string
+}
+
 type RootConfig struct {
 	HOST    string
 	PORT    string
 	REDIS   RedisConfig
+	BREVO   BrevoConfig
 	MODE    string
 	WORKERS int
 }
@@ -51,6 +58,11 @@ func LoadConfig() (*RootConfig, error) {
 		REDIS: RedisConfig{
 			HOST: os.Getenv("REDIS_HOST"),
 			PORT: os.Getenv("REDIS_PORT"),
+		},
+		BREVO: BrevoConfig{
+			URL:     os.Getenv("BREVO_URL"),
+			API_KEY: os.Getenv("BREVO_API_KEY"),
+			EMAIL:   os.Getenv("BREVO_EMAIL"),
 		},
 		MODE:    "local",
 		WORKERS: 2,

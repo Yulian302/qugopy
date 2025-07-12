@@ -1,12 +1,9 @@
 package shell
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"reflect"
-	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -14,7 +11,6 @@ import (
 	"github.com/Yulian302/qugopy/internal/tasks"
 	"github.com/Yulian302/qugopy/internal/trie"
 	"github.com/Yulian302/qugopy/logging"
-	"github.com/Yulian302/qugopy/models"
 	"github.com/Yulian302/qugopy/shell/internal"
 	"github.com/go-redis/redis"
 )
@@ -27,6 +23,7 @@ type Shell struct {
 	currGroup              int
 	lastSuggestionsPrinted int
 	cursorPos              int
+	lastRenderedLines      int
 
 	tokenTrie *trie.TrieToken
 	runeTrie  *trie.TrieRune
@@ -197,16 +194,21 @@ func (sh *Shell) handleEraseAll() {
 }
 
 func (sh *Shell) redrawInput() {
-	// Move cursor to start of line
-	fmt.Print("\rqugopy> ")
+	// TODO fix multiline wrapping
+	// width, _, _ := term.GetSize(int(os.Stdin.Fd()))
+	splitSize := 50
+	if len(sh.input) <= splitSize {
+		fmt.Print("\rqugopy> ")
+		os.Stdout.Write(sh.input)
+	} else {
+		fmt.Print("\rqugopy> ")
+		os.Stdout.Write(sh.input[:splitSize])
+		fmt.Print("\n...> ")
+		os.Stdout.Write(sh.input[splitSize:])
+	}
 
-	// Print full input
-	os.Stdout.Write(sh.input)
-
-	// Clear any leftovers if shrinking
 	fmt.Print("\033[K")
 
-	// Move cursor back to proper position
 	back := len(sh.input) - sh.cursorPos
 	if back > 0 {
 		fmt.Printf("\033[%dD", back) // move left N times
@@ -269,113 +271,6 @@ func (sh *Shell) handleShowSuggestions() {
 	sh.lastSuggestionsPrinted = len(allSuggestions)
 
 	sh.isChangedInput = false
-}
-
-func splitCommandLine(input string) []string {
-	var args []string
-	var buf strings.Builder
-	var inQuote rune
-	escaped := false
-
-	for _, r := range input {
-		switch {
-		case escaped:
-			buf.WriteRune(r)
-			escaped = false
-		case r == '\\':
-			escaped = true
-		case inQuote != 0:
-			if r == inQuote {
-				inQuote = 0
-			} else {
-				buf.WriteRune(r)
-			}
-		case r == '"' || r == '\'':
-			inQuote = r
-		case r == ' ' || r == '\t':
-			if buf.Len() > 0 {
-				args = append(args, buf.String())
-				buf.Reset()
-			}
-		default:
-			buf.WriteRune(r)
-		}
-	}
-
-	if buf.Len() > 0 {
-		args = append(args, buf.String())
-	}
-	return args
-}
-
-func parseArgs(line string) map[string]string {
-	args := map[string]string{}
-	tokens := splitCommandLine(line)
-
-	for i := 0; i < len(tokens); i++ {
-		if strings.HasPrefix(tokens[i], "--") {
-			key := strings.TrimPrefix(tokens[i], "--")
-			if i+1 < len(tokens) && !strings.HasPrefix(tokens[i+1], "--") {
-				args[key] = tokens[i+1]
-				i++
-			} else {
-				args[key] = "" // handle flag without value
-			}
-		}
-	}
-	return args
-}
-
-func parseTaskFromCmd(line string) (models.Task, error) {
-	args := parseArgs(line)
-
-	task := models.Task{}
-	taskValue := reflect.ValueOf(&task).Elem()
-	taskType := taskValue.Type()
-
-	for i := 0; i < taskValue.NumField(); i++ {
-		field := taskType.Field(i)
-		jsonTag := field.Tag.Get("json")
-		if !field.IsExported() {
-			continue
-		}
-
-		rawValue, ok := args[jsonTag]
-		if !ok {
-			continue
-		}
-
-		fieldValue := taskValue.Field(i)
-		fieldType := field.Type
-
-		switch fieldType.Kind() {
-		case reflect.String:
-			fieldValue.SetString(rawValue)
-
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if intVal, err := strconv.ParseInt(rawValue, 10, 64); err == nil {
-				fieldValue.SetInt(intVal)
-			} else {
-				return models.Task{}, fmt.Errorf("⚠️ Int parse error for %s: %v\n", jsonTag, err)
-			}
-
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			if uintVal, err := strconv.ParseUint(rawValue, 10, 64); err == nil {
-				fieldValue.SetUint(uintVal)
-			} else {
-				return models.Task{}, fmt.Errorf("⚠️ Uint parse error for %s: %v\n", jsonTag, err)
-			}
-
-		default:
-			if fieldType == reflect.TypeOf(json.RawMessage{}) {
-				fieldValue.Set(reflect.ValueOf(json.RawMessage(rawValue)))
-			} else {
-				return models.Task{}, fmt.Errorf("⚠️ Unknown field type for %s: %v\n", jsonTag, fieldType)
-			}
-		}
-	}
-
-	return task, nil
 }
 
 func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
@@ -487,8 +382,9 @@ func (sh *Shell) Start(tokenGroups [][]string, rdb *redis.Client) {
 
 			if len(sh.input) == 0 {
 				fmt.Println("(empty)")
+			} else {
+				fmt.Printf("Invalid command: %s\n", line)
 			}
-			fmt.Printf("Invalid command: %s\n", line)
 			continue
 		}
 		fmt.Println("Task added successfully!")
