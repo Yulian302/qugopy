@@ -24,6 +24,8 @@ var (
 	ERASE_ENTIRE_LINE     = []byte("\033[2K")
 	ERASE_CHAR            = []byte("\b \b")
 	CLEAR_SCREEN          = []byte("\033[H\033[2J")
+	BRACKETED_PASTE       = []byte("\033[?2004h")
+	NORMAL_PASTE          = []byte("\033[?2004l")
 	//moves cursor to beginning of previous line, # lines up
 	MOVE_CURSOR_PREV_N_BEG = "\033[%dF"
 )
