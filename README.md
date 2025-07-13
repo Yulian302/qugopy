@@ -13,15 +13,27 @@
 A smart and highly-efficient task queue system that routes and processes priority-based jobs using multiple workers written in Go and Python.
 Clients submit high-level tasks (e.g., email sending, report generation), and the system dispatches them to the appropriate runtime environment based on task type. Jobs are prioritized using a **custom min-heap priority queue** implemented in both Go and Python or are sent directly to **Redis**, depending on the chosen `mode`.
 
+<p>&nbsp;</p>
+
 # Features
-After starting the app via CLI, you can use either `CLI` or `REST API` to queue the tasks.
-## Interactive CLI
-TODO
-## REST API
-TODO
+- Fast task queue built in Go and Python
+- CLI + REST API interfaces
+- Custom min-heap priority queue
+- Redis support for distributed task scheduling
+- Autocomplete-powered interactive shell
 
+<p>&nbsp;</p>
 
-# Requirements ✅
+# Tasks
+Here are a few predefined tasks that can be added by a task scheduler:
+| Name       | Payload    |      | Description                                               |
+|:----------------: |:------------------|----| ----------------------------------------------------|
+| `send_email` | <code>{<br/>client_name,<br/>client_email,<br/>recipient_name,<br/> recipient_email,<br/>subject,<br/>html_content&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>}</code> || Send email using Brevo SMTP to any recipient using your email address. |
+| `download_file` | <code>{<br/>url,<br/>filename<br/>}</code> || Download a file from a given URL and store it locally in `/storage` directory as a `filename`. |
+
+<p>&nbsp;</p>
+
+# Requirements
 Before building or running the project, ensure the following dependencies are installed:
 | Requirement       | Version          | Description                                               |
 |-------------------|------------------|-----------------------------------------------------------|
@@ -31,7 +43,7 @@ Before building or running the project, ensure the following dependencies are in
 | Git               | Any modern version | Required to clone the repository                        |
 | Unix-like Shell (optional) | — | Bash/Zsh recommended for script execution and CLI usage         |
 
-
+<p>&nbsp;</p>
 
 # Installation
 Follow the steps **below** to set up and build the application.
@@ -120,16 +132,73 @@ Once built, you can run the server using the following command:
 ```bash
 ./qugopy start --mode redis --workers 5
 ```
-This will start the server in Redis mode with 5 background workers.
+This will start the server in Redis mode with 5 background workers. **The app will automatically start the Interactive Shell session.**
 
 ## Task Scheduling
 Now it's time to schedule/queue some tasks. You can either use `CLI` or `REST API` mode and even **BOTH** of them.
-### Using CLI
-TODO
 
-### Using REST API
-TODO
+## Interactive CLI
+Comes with **autocomplete** and the **history** of commands.
+- Press `TAB` in order to see available commands and options.
+- Use the following command to enqueue a task:
+```bash
+add task --type <task_type> --payload <payload> --priority <n>
+```
 
+Example:
+
+```bash
+add task --type download_file --payload '{"url":"https://jsonplaceholder.typicode.com/todos/1","filename":"dummy.json"}' --priority 1
+```
+
+## REST API
+You can also interact with the task scheduler programmatically via HTTP using the REST API.
+
+|Method|Endpoint|Description|
+|:------:|:--------:|-----------|
+|`GET`|`/test`|Check if the REST API server is running and responsive|
+|`POST`|`/tasks`|Enqueue a new task into the system|
+
+The API accepts JSON-formatted task data in the request body.
+**Default port: 5000**
+
+Example using curl:
+<br/>
+Download a file:
+
+```bash
+curl -X POST http://localhost:5000/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "download_file",
+    "payload": {
+      "url": "https://jsonplaceholder.typicode.com/todos/1",
+      "filename": "dummy.json"
+    },
+    "priority": 1
+  }'
+```
+
+Payload for sending email:
+
+```json
+{
+  "type": "send_email",
+  "payload": {
+    "client_name": "Alice",
+    "client_email": "alice@example.com",
+    "recipient_name": "Bob",
+    "recipient_email": "bob@example.com",
+    "subject": "Welcome",
+    "html_content": "<h1>Hello Bob!</h1>"
+  },
+  "priority": 2
+}
+
+```
+
+
+<p>&nbsp;</p>
 
 # Contributing
 Contributions are welcomed and appreciated! If you'd like to improve this project, fix a bug, or add a new feature, please follow the steps below.
