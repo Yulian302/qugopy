@@ -26,10 +26,10 @@ Clients submit high-level tasks (e.g., email sending, report generation), and th
 
 # Tasks
 Here are a few predefined tasks that can be added by a task scheduler:
-| Name       | Payload    |      | Description                                               |
-|:----------------: |:------------------|----| ----------------------------------------------------|
-| `send_email` | <code>{<br/>client_name,<br/>client_email,<br/>recipient_name,<br/> recipient_email,<br/>subject,<br/>html_content&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>}</code> || Send email using Brevo SMTP to any recipient using your email address. |
-| `download_file` | <code>{<br/>url,<br/>filename<br/>}</code> || Download a file from a given URL and store it locally in `/storage` directory as a `filename`. |
+| Name       | Payload    |      Description                                               |
+|:----------------: |:------------------| ----------------------------------------------------|
+| `send_email` | {<br/>&nbsp;&nbsp;&nbsp;`client_name`,<br/>&nbsp;&nbsp;&nbsp;`client_email`,<br/>&nbsp;&nbsp;&nbsp;`recipient_name`,<br/>&nbsp;&nbsp;&nbsp;`recipient_email`,<br/>&nbsp;&nbsp;&nbsp;`subject`,<br/>&nbsp;&nbsp;&nbsp;`html_content`<br/>} | Send email using Brevo SMTP to any recipient using your email address.
+| `download_file` | {<br/>&nbsp;&nbsp;&nbsp;`url`,<br/>&nbsp;&nbsp;&nbsp;`filename`<br/>} | Download a file from a given URL and store it locally in `/storage` directory as a `filename`. |
 
 <p>&nbsp;</p>
 
@@ -123,10 +123,10 @@ Once built, you can run the server using the following command:
 ```
 
 ## Arguments
-| Flag       | Description                           |     | Default              |
-| :-----     | :------------------------------------ |:--- | :-------------------:|
-| `--mode`   | Queue mode to use: `redis` or `local` |     | `local`              |
-| `--workers`| Number of workers to spawn            |     | `2`                  |
+| Flag       | Description                           |      Default              |
+| :-----     | :------------------------------------ | :-------------------:|
+| `--mode`   | Queue mode to use: `redis` or `local` |   `local`              |
+| `--workers`| Number of workers to spawn            |   `2`                  |
 
 **Example:**
 ```bash
