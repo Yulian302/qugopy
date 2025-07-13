@@ -13,6 +13,7 @@ import (
 	"github.com/Yulian302/qugopy/logging"
 	"github.com/Yulian302/qugopy/shell/internal"
 	"github.com/go-redis/redis"
+	"golang.org/x/term"
 )
 
 type Shell struct {
@@ -194,26 +195,61 @@ func (sh *Shell) handleEraseAll() {
 }
 
 func (sh *Shell) redrawInput() {
-	// TODO fix multiline wrapping
-	// width, _, _ := term.GetSize(int(os.Stdin.Fd()))
-	splitSize := 50
-	if len(sh.input) <= splitSize {
-		fmt.Print("\rqugopy> ")
-		os.Stdout.Write(sh.input)
-	} else {
-		fmt.Print("\rqugopy> ")
-		os.Stdout.Write(sh.input[:splitSize])
-		fmt.Print("\n...> ")
-		os.Stdout.Write(sh.input[splitSize:])
+	width, _, err := term.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		width = 50
 	}
 
-	fmt.Print("\033[K")
+	inputLen := len(sh.input)
+	fmt.Print("\033[H")
 
-	back := len(sh.input) - sh.cursorPos
-	if back > 0 {
-		fmt.Printf("\033[%dD", back) // move left N times
+	linesToClear := (inputLen + width - 1) / (width - len("...> "))
+	for i := 0; i <= linesToClear; i++ {
+		fmt.Print("\r\033[K")
+		if i < linesToClear {
+			fmt.Print("\n")
+		}
 	}
+	for i := 0; i < linesToClear; i++ {
+		fmt.Print("\033[A")
+	}
+
+	pos := 0
+	cursorRow, cursorCol := 0, 0
+
+	for i := 0; pos < inputLen; i++ {
+		var prompt string
+		var usableWidth int
+		if i == 0 {
+			prompt = "qugopy> "
+			usableWidth = width - len(prompt)
+		} else {
+			prompt = "...> "
+			usableWidth = width - len(prompt)
+		}
+
+		fmt.Print(prompt)
+
+		end := pos + usableWidth
+		if end > inputLen {
+			end = inputLen
+		}
+		os.Stdout.Write(sh.input[pos:end])
+
+		if sh.cursorPos >= pos && sh.cursorPos <= end {
+			cursorRow = i
+			cursorCol = len(prompt) + (sh.cursorPos - pos)
+		}
+
+		pos = end
+		if pos < inputLen {
+			fmt.Print("\n")
+		}
+	}
+
+	fmt.Printf("\033[%d;%dH", cursorRow+1, cursorCol+1)
 }
+
 func (sh *Shell) handleAppendChar(b byte) {
 	if sh.cursorPos > len(sh.input) {
 		sh.cursorPos = len(sh.input)
