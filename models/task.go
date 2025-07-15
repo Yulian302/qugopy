@@ -7,9 +7,15 @@ import (
 	_ "github.com/go-playground/validator"
 )
 
+const (
+	SendEmail    TaskType = "send_email"
+	DownloadFile TaskType = "download_file"
+	ProcessImage TaskType = "process_image"
+)
+
 type Task struct {
 	// Type categorizes the task (e.g., "email", "notification").
-	Type string `form:"type" json:"type" binding:"required,oneof=download_file send_email"`
+	Type string `form:"type" json:"type" binding:"required,oneof=download_file send_email process_image"`
 
 	// Payload contains task-specific data in string format.
 	Payload json.RawMessage `form:"payload" json:"payload" binding:"required"`
@@ -23,4 +29,15 @@ type Task struct {
 
 	// Recurring sets if a task must recur occasionally. Optional field.
 	Recurring *bool `form:"recurring" json:"recurring,omitempty"`
+}
+
+type TaskType string
+
+func (tt TaskType) IsValid() bool {
+	switch tt {
+	case SendEmail, DownloadFile, ProcessImage:
+		return true
+	default:
+		return false
+	}
 }

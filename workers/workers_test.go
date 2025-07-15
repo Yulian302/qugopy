@@ -22,7 +22,7 @@ func TestWorkerLifecycle(t *testing.T) {
 		config := PythonWorkerConfig{
 			EnvPath:      path.Join(config.ProjectRootPath, "processing", "venv", "bin"),
 			FilePath:     path.Join(config.ProjectRootPath, "processing", "worker.py"),
-			Mode:         "test",
+			Mode:         "redis",
 			IsProduction: false,
 		}
 

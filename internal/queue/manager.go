@@ -7,6 +7,11 @@ type LocalQueue struct {
 	Lock sync.Mutex
 }
 
-var DefaultLocalQueue = &LocalQueue{
-	PQ: PriorityQueue{},
-}
+var (
+	PythonLocalQueue = &LocalQueue{
+		PQ: PriorityQueue{},
+	}
+	GoLocalQueue = &LocalQueue{
+		PQ: PriorityQueue{},
+	}
+)

@@ -4,18 +4,38 @@ package task;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "github.com/Yulian302/qugopy/proto;taskpb";
 
 
 service TaskService{
-    rpc GetTask (Empty) returns (IntTask);
+    rpc GetTask (GetTaskRequest) returns (IntTask);
+    rpc GetGoTask (google.protobuf.Empty) returns (IntTask);
+    rpc GetPythonTask (google.protobuf.Empty) returns (IntTask);
 }
 
+
+message GetTaskRequest {
+    WorkerType worker_type = 1;
+}
+
+enum WorkerType {
+  WORKER_TYPE_UNSPECIFIED = 0;
+  WORKER_TYPE_GO = 1;
+  WORKER_TYPE_PYTHON = 2;
+}
 
 message IntTask {
   string id = 1;
   Task task = 2;
+  QueueType queue_type = 3;
+}
+
+enum QueueType {
+    QUEUE_TYPE_UNSPECIFIED = 0;
+    QUEUE_TYPE_GO = 1;
+    QUEUE_TYPE_PYTHON = 2;
 }
 
 message Task {
@@ -29,6 +49,3 @@ message Task {
 
   google.protobuf.BoolValue recurring = 5;
 }
-
-
-message Empty{}

@@ -24,9 +24,10 @@ _sym_db = _symbol_database.Default()
 
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 from google.protobuf import wrappers_pb2 as google_dot_protobuf_dot_wrappers__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ntask.proto\x12\x04task\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"/\n\x07IntTask\x12\n\n\x02id\x18\x01 \x01(\t\x12\x18\n\x04task\x18\x02 \x01(\x0b\x32\n.task.Task\"\x94\x01\n\x04Task\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x10\n\x08priority\x18\x03 \x01(\r\x12,\n\x08\x64\x65\x61\x64line\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12-\n\trecurring\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.BoolValue\"\x07\n\x05\x45mpty24\n\x0bTaskService\x12%\n\x07GetTask\x12\x0b.task.Empty\x1a\r.task.IntTaskB*Z(github.com/Yulian302/qugopy/proto;taskpbb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ntask.proto\x12\x04task\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1bgoogle/protobuf/empty.proto\"7\n\x0eGetTaskRequest\x12%\n\x0bworker_type\x18\x01 \x01(\x0e\x32\x10.task.WorkerType\"T\n\x07IntTask\x12\n\n\x02id\x18\x01 \x01(\t\x12\x18\n\x04task\x18\x02 \x01(\x0b\x32\n.task.Task\x12#\n\nqueue_type\x18\x03 \x01(\x0e\x32\x0f.task.QueueType\"\x94\x01\n\x04Task\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\x0f\n\x07payload\x18\x02 \x01(\x0c\x12\x10\n\x08priority\x18\x03 \x01(\r\x12,\n\x08\x64\x65\x61\x64line\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12-\n\trecurring\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.BoolValue*U\n\nWorkerType\x12\x1b\n\x17WORKER_TYPE_UNSPECIFIED\x10\x00\x12\x12\n\x0eWORKER_TYPE_GO\x10\x01\x12\x16\n\x12WORKER_TYPE_PYTHON\x10\x02*Q\n\tQueueType\x12\x1a\n\x16QUEUE_TYPE_UNSPECIFIED\x10\x00\x12\x11\n\rQUEUE_TYPE_GO\x10\x01\x12\x15\n\x11QUEUE_TYPE_PYTHON\x10\x02\x32\xa9\x01\n\x0bTaskService\x12.\n\x07GetTask\x12\x14.task.GetTaskRequest\x1a\r.task.IntTask\x12\x32\n\tGetGoTask\x12\x16.google.protobuf.Empty\x1a\r.task.IntTask\x12\x36\n\rGetPythonTask\x12\x16.google.protobuf.Empty\x1a\r.task.IntTaskB*Z(github.com/Yulian302/qugopy/proto;taskpbb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,12 +35,16 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'task_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z(github.com/Yulian302/qugopy/proto;taskpb'
-  _globals['_INTTASK']._serialized_start=85
-  _globals['_INTTASK']._serialized_end=132
-  _globals['_TASK']._serialized_start=135
-  _globals['_TASK']._serialized_end=283
-  _globals['_EMPTY']._serialized_start=285
-  _globals['_EMPTY']._serialized_end=292
-  _globals['_TASKSERVICE']._serialized_start=294
-  _globals['_TASKSERVICE']._serialized_end=346
+  _globals['_WORKERTYPE']._serialized_start=408
+  _globals['_WORKERTYPE']._serialized_end=493
+  _globals['_QUEUETYPE']._serialized_start=495
+  _globals['_QUEUETYPE']._serialized_end=576
+  _globals['_GETTASKREQUEST']._serialized_start=114
+  _globals['_GETTASKREQUEST']._serialized_end=169
+  _globals['_INTTASK']._serialized_start=171
+  _globals['_INTTASK']._serialized_end=255
+  _globals['_TASK']._serialized_start=258
+  _globals['_TASK']._serialized_end=406
+  _globals['_TASKSERVICE']._serialized_start=579
+  _globals['_TASKSERVICE']._serialized_end=748
 # @@protoc_insertion_point(module_scope)

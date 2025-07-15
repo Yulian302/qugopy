@@ -9,6 +9,7 @@ package taskpb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
@@ -23,17 +24,160 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type WorkerType int32
+
+const (
+	WorkerType_WORKER_TYPE_UNSPECIFIED WorkerType = 0
+	WorkerType_WORKER_TYPE_GO          WorkerType = 1
+	WorkerType_WORKER_TYPE_PYTHON      WorkerType = 2
+)
+
+// Enum value maps for WorkerType.
+var (
+	WorkerType_name = map[int32]string{
+		0: "WORKER_TYPE_UNSPECIFIED",
+		1: "WORKER_TYPE_GO",
+		2: "WORKER_TYPE_PYTHON",
+	}
+	WorkerType_value = map[string]int32{
+		"WORKER_TYPE_UNSPECIFIED": 0,
+		"WORKER_TYPE_GO":          1,
+		"WORKER_TYPE_PYTHON":      2,
+	}
+)
+
+func (x WorkerType) Enum() *WorkerType {
+	p := new(WorkerType)
+	*p = x
+	return p
+}
+
+func (x WorkerType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WorkerType) Descriptor() protoreflect.EnumDescriptor {
+	return file_task_proto_enumTypes[0].Descriptor()
+}
+
+func (WorkerType) Type() protoreflect.EnumType {
+	return &file_task_proto_enumTypes[0]
+}
+
+func (x WorkerType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WorkerType.Descriptor instead.
+func (WorkerType) EnumDescriptor() ([]byte, []int) {
+	return file_task_proto_rawDescGZIP(), []int{0}
+}
+
+type QueueType int32
+
+const (
+	QueueType_QUEUE_TYPE_UNSPECIFIED QueueType = 0
+	QueueType_QUEUE_TYPE_GO          QueueType = 1
+	QueueType_QUEUE_TYPE_PYTHON      QueueType = 2
+)
+
+// Enum value maps for QueueType.
+var (
+	QueueType_name = map[int32]string{
+		0: "QUEUE_TYPE_UNSPECIFIED",
+		1: "QUEUE_TYPE_GO",
+		2: "QUEUE_TYPE_PYTHON",
+	}
+	QueueType_value = map[string]int32{
+		"QUEUE_TYPE_UNSPECIFIED": 0,
+		"QUEUE_TYPE_GO":          1,
+		"QUEUE_TYPE_PYTHON":      2,
+	}
+)
+
+func (x QueueType) Enum() *QueueType {
+	p := new(QueueType)
+	*p = x
+	return p
+}
+
+func (x QueueType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (QueueType) Descriptor() protoreflect.EnumDescriptor {
+	return file_task_proto_enumTypes[1].Descriptor()
+}
+
+func (QueueType) Type() protoreflect.EnumType {
+	return &file_task_proto_enumTypes[1]
+}
+
+func (x QueueType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use QueueType.Descriptor instead.
+func (QueueType) EnumDescriptor() ([]byte, []int) {
+	return file_task_proto_rawDescGZIP(), []int{1}
+}
+
+type GetTaskRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	WorkerType    WorkerType             `protobuf:"varint,1,opt,name=worker_type,json=workerType,proto3,enum=task.WorkerType" json:"worker_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTaskRequest) Reset() {
+	*x = GetTaskRequest{}
+	mi := &file_task_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTaskRequest) ProtoMessage() {}
+
+func (x *GetTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_task_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTaskRequest.ProtoReflect.Descriptor instead.
+func (*GetTaskRequest) Descriptor() ([]byte, []int) {
+	return file_task_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetTaskRequest) GetWorkerType() WorkerType {
+	if x != nil {
+		return x.WorkerType
+	}
+	return WorkerType_WORKER_TYPE_UNSPECIFIED
+}
+
 type IntTask struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Task          *Task                  `protobuf:"bytes,2,opt,name=task,proto3" json:"task,omitempty"`
+	QueueType     QueueType              `protobuf:"varint,3,opt,name=queue_type,json=queueType,proto3,enum=task.QueueType" json:"queue_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *IntTask) Reset() {
 	*x = IntTask{}
-	mi := &file_task_proto_msgTypes[0]
+	mi := &file_task_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +189,7 @@ func (x *IntTask) String() string {
 func (*IntTask) ProtoMessage() {}
 
 func (x *IntTask) ProtoReflect() protoreflect.Message {
-	mi := &file_task_proto_msgTypes[0]
+	mi := &file_task_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +202,7 @@ func (x *IntTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IntTask.ProtoReflect.Descriptor instead.
 func (*IntTask) Descriptor() ([]byte, []int) {
-	return file_task_proto_rawDescGZIP(), []int{0}
+	return file_task_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *IntTask) GetId() string {
@@ -75,6 +219,13 @@ func (x *IntTask) GetTask() *Task {
 	return nil
 }
 
+func (x *IntTask) GetQueueType() QueueType {
+	if x != nil {
+		return x.QueueType
+	}
+	return QueueType_QUEUE_TYPE_UNSPECIFIED
+}
+
 type Task struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
@@ -88,7 +239,7 @@ type Task struct {
 
 func (x *Task) Reset() {
 	*x = Task{}
-	mi := &file_task_proto_msgTypes[1]
+	mi := &file_task_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -100,7 +251,7 @@ func (x *Task) String() string {
 func (*Task) ProtoMessage() {}
 
 func (x *Task) ProtoReflect() protoreflect.Message {
-	mi := &file_task_proto_msgTypes[1]
+	mi := &file_task_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -113,7 +264,7 @@ func (x *Task) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Task.ProtoReflect.Descriptor instead.
 func (*Task) Descriptor() ([]byte, []int) {
-	return file_task_proto_rawDescGZIP(), []int{1}
+	return file_task_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Task) GetType() string {
@@ -151,61 +302,40 @@ func (x *Task) GetRecurring() *wrapperspb.BoolValue {
 	return nil
 }
 
-type Empty struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Empty) Reset() {
-	*x = Empty{}
-	mi := &file_task_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Empty) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Empty) ProtoMessage() {}
-
-func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_task_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
-func (*Empty) Descriptor() ([]byte, []int) {
-	return file_task_proto_rawDescGZIP(), []int{2}
-}
-
 var File_task_proto protoreflect.FileDescriptor
 
 const file_task_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"task.proto\x12\x04task\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"9\n" +
+	"task.proto\x12\x04task\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1bgoogle/protobuf/empty.proto\"C\n" +
+	"\x0eGetTaskRequest\x121\n" +
+	"\vworker_type\x18\x01 \x01(\x0e2\x10.task.WorkerTypeR\n" +
+	"workerType\"i\n" +
 	"\aIntTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
 	"\x04task\x18\x02 \x01(\v2\n" +
-	".task.TaskR\x04task\"\xc2\x01\n" +
+	".task.TaskR\x04task\x12.\n" +
+	"\n" +
+	"queue_type\x18\x03 \x01(\x0e2\x0f.task.QueueTypeR\tqueueType\"\xc2\x01\n" +
 	"\x04Task\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload\x12\x1a\n" +
 	"\bpriority\x18\x03 \x01(\rR\bpriority\x126\n" +
 	"\bdeadline\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bdeadline\x128\n" +
-	"\trecurring\x18\x05 \x01(\v2\x1a.google.protobuf.BoolValueR\trecurring\"\a\n" +
-	"\x05Empty24\n" +
-	"\vTaskService\x12%\n" +
-	"\aGetTask\x12\v.task.Empty\x1a\r.task.IntTaskB*Z(github.com/Yulian302/qugopy/proto;taskpbb\x06proto3"
+	"\trecurring\x18\x05 \x01(\v2\x1a.google.protobuf.BoolValueR\trecurring*U\n" +
+	"\n" +
+	"WorkerType\x12\x1b\n" +
+	"\x17WORKER_TYPE_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eWORKER_TYPE_GO\x10\x01\x12\x16\n" +
+	"\x12WORKER_TYPE_PYTHON\x10\x02*Q\n" +
+	"\tQueueType\x12\x1a\n" +
+	"\x16QUEUE_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
+	"\rQUEUE_TYPE_GO\x10\x01\x12\x15\n" +
+	"\x11QUEUE_TYPE_PYTHON\x10\x022\xa9\x01\n" +
+	"\vTaskService\x12.\n" +
+	"\aGetTask\x12\x14.task.GetTaskRequest\x1a\r.task.IntTask\x122\n" +
+	"\tGetGoTask\x12\x16.google.protobuf.Empty\x1a\r.task.IntTask\x126\n" +
+	"\rGetPythonTask\x12\x16.google.protobuf.Empty\x1a\r.task.IntTaskB*Z(github.com/Yulian302/qugopy/proto;taskpbb\x06proto3"
 
 var (
 	file_task_proto_rawDescOnce sync.Once
@@ -219,25 +349,35 @@ func file_task_proto_rawDescGZIP() []byte {
 	return file_task_proto_rawDescData
 }
 
+var file_task_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_task_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_task_proto_goTypes = []any{
-	(*IntTask)(nil),               // 0: task.IntTask
-	(*Task)(nil),                  // 1: task.Task
-	(*Empty)(nil),                 // 2: task.Empty
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
-	(*wrapperspb.BoolValue)(nil),  // 4: google.protobuf.BoolValue
+	(WorkerType)(0),               // 0: task.WorkerType
+	(QueueType)(0),                // 1: task.QueueType
+	(*GetTaskRequest)(nil),        // 2: task.GetTaskRequest
+	(*IntTask)(nil),               // 3: task.IntTask
+	(*Task)(nil),                  // 4: task.Task
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(*wrapperspb.BoolValue)(nil),  // 6: google.protobuf.BoolValue
+	(*emptypb.Empty)(nil),         // 7: google.protobuf.Empty
 }
 var file_task_proto_depIdxs = []int32{
-	1, // 0: task.IntTask.task:type_name -> task.Task
-	3, // 1: task.Task.deadline:type_name -> google.protobuf.Timestamp
-	4, // 2: task.Task.recurring:type_name -> google.protobuf.BoolValue
-	2, // 3: task.TaskService.GetTask:input_type -> task.Empty
-	0, // 4: task.TaskService.GetTask:output_type -> task.IntTask
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 0: task.GetTaskRequest.worker_type:type_name -> task.WorkerType
+	4, // 1: task.IntTask.task:type_name -> task.Task
+	1, // 2: task.IntTask.queue_type:type_name -> task.QueueType
+	5, // 3: task.Task.deadline:type_name -> google.protobuf.Timestamp
+	6, // 4: task.Task.recurring:type_name -> google.protobuf.BoolValue
+	2, // 5: task.TaskService.GetTask:input_type -> task.GetTaskRequest
+	7, // 6: task.TaskService.GetGoTask:input_type -> google.protobuf.Empty
+	7, // 7: task.TaskService.GetPythonTask:input_type -> google.protobuf.Empty
+	3, // 8: task.TaskService.GetTask:output_type -> task.IntTask
+	3, // 9: task.TaskService.GetGoTask:output_type -> task.IntTask
+	3, // 10: task.TaskService.GetPythonTask:output_type -> task.IntTask
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_task_proto_init() }
@@ -250,13 +390,14 @@ func file_task_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_task_proto_rawDesc), len(file_task_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      2,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_task_proto_goTypes,
 		DependencyIndexes: file_task_proto_depIdxs,
+		EnumInfos:         file_task_proto_enumTypes,
 		MessageInfos:      file_task_proto_msgTypes,
 	}.Build()
 	File_task_proto = out.File

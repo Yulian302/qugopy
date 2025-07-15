@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,14 +20,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TaskService_GetTask_FullMethodName = "/task.TaskService/GetTask"
+	TaskService_GetTask_FullMethodName       = "/task.TaskService/GetTask"
+	TaskService_GetGoTask_FullMethodName     = "/task.TaskService/GetGoTask"
+	TaskService_GetPythonTask_FullMethodName = "/task.TaskService/GetPythonTask"
 )
 
 // TaskServiceClient is the client API for TaskService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TaskServiceClient interface {
-	GetTask(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*IntTask, error)
+	GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*IntTask, error)
+	GetGoTask(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*IntTask, error)
+	GetPythonTask(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*IntTask, error)
 }
 
 type taskServiceClient struct {
@@ -37,10 +42,30 @@ func NewTaskServiceClient(cc grpc.ClientConnInterface) TaskServiceClient {
 	return &taskServiceClient{cc}
 }
 
-func (c *taskServiceClient) GetTask(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*IntTask, error) {
+func (c *taskServiceClient) GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*IntTask, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(IntTask)
 	err := c.cc.Invoke(ctx, TaskService_GetTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) GetGoTask(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*IntTask, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IntTask)
+	err := c.cc.Invoke(ctx, TaskService_GetGoTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) GetPythonTask(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*IntTask, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IntTask)
+	err := c.cc.Invoke(ctx, TaskService_GetPythonTask_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +76,9 @@ func (c *taskServiceClient) GetTask(ctx context.Context, in *Empty, opts ...grpc
 // All implementations must embed UnimplementedTaskServiceServer
 // for forward compatibility.
 type TaskServiceServer interface {
-	GetTask(context.Context, *Empty) (*IntTask, error)
+	GetTask(context.Context, *GetTaskRequest) (*IntTask, error)
+	GetGoTask(context.Context, *emptypb.Empty) (*IntTask, error)
+	GetPythonTask(context.Context, *emptypb.Empty) (*IntTask, error)
 	mustEmbedUnimplementedTaskServiceServer()
 }
 
@@ -62,8 +89,14 @@ type TaskServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTaskServiceServer struct{}
 
-func (UnimplementedTaskServiceServer) GetTask(context.Context, *Empty) (*IntTask, error) {
+func (UnimplementedTaskServiceServer) GetTask(context.Context, *GetTaskRequest) (*IntTask, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTask not implemented")
+}
+func (UnimplementedTaskServiceServer) GetGoTask(context.Context, *emptypb.Empty) (*IntTask, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGoTask not implemented")
+}
+func (UnimplementedTaskServiceServer) GetPythonTask(context.Context, *emptypb.Empty) (*IntTask, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPythonTask not implemented")
 }
 func (UnimplementedTaskServiceServer) mustEmbedUnimplementedTaskServiceServer() {}
 func (UnimplementedTaskServiceServer) testEmbeddedByValue()                     {}
@@ -87,7 +120,7 @@ func RegisterTaskServiceServer(s grpc.ServiceRegistrar, srv TaskServiceServer) {
 }
 
 func _TaskService_GetTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(GetTaskRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -99,7 +132,43 @@ func _TaskService_GetTask_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: TaskService_GetTask_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskServiceServer).GetTask(ctx, req.(*Empty))
+		return srv.(TaskServiceServer).GetTask(ctx, req.(*GetTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_GetGoTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).GetGoTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_GetGoTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).GetGoTask(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_GetPythonTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).GetPythonTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_GetPythonTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).GetPythonTask(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -114,6 +183,14 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTask",
 			Handler:    _TaskService_GetTask_Handler,
+		},
+		{
+			MethodName: "GetGoTask",
+			Handler:    _TaskService_GetGoTask_Handler,
+		},
+		{
+			MethodName: "GetPythonTask",
+			Handler:    _TaskService_GetPythonTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

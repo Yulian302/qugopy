@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"log"
 
 	"github.com/Yulian302/qugopy/config"
 	"github.com/Yulian302/qugopy/internal/api"
@@ -11,20 +13,20 @@ import (
 
 var rdb *redis.Client
 
-func StartApp(mode string, workers int, isProduction bool) error {
-
+func StartApp(mode string, workers int, isProduction bool) (context.CancelFunc, error) {
 	wd := w.NewWorkerDistributor(rdb)
 	cancel, err := wd.DistributeWorkers(workers, mode, isProduction, rdb)
 	if err != nil {
-		return fmt.Errorf("failed to distribute workers: %w", err)
+		return nil, fmt.Errorf("failed to distribute workers: %w", err)
 	}
-	defer cancel()
 
 	router := api.NewRouter(rdb)
 
-	if err := router.Run(fmt.Sprintf("%s:%s", config.AppConfig.HOST, config.AppConfig.PORT)); err != nil {
-		return fmt.Errorf("failed to start server: %w", err)
-	}
+	go func() {
+		if err := router.Run(fmt.Sprintf("%s:%s", config.AppConfig.HOST, config.AppConfig.PORT)); err != nil {
+			log.Printf("failed to start server: %v", err)
+		}
+	}()
 
-	return nil
+	return cancel, nil
 }

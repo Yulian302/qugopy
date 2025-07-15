@@ -44,7 +44,7 @@ Content-Type: application/json
 }
 
 ###
-// test mode is present and valid
+// test download file
 POST http://127.0.0.1:5000/tasks HTTP/1.1
 Content-Type: application/json
 
@@ -76,7 +76,28 @@ Content-Type: application/json
     "priority":2
 }
 
+###
+// test process image
+POST http://127.0.0.1:5000/tasks HTTP/1.1
+Content-Type: application/json
+
+{
+    "type": "process_image",
+    "payload": {
+        "input_path": "/Users/yulianbohomol/Desktop/WebApps/qugopy/storage/image.jpg",
+        "output_path": "/Users/yulianbohomol/Desktop/WebApps/qugopy/storage/image.webp",
+        "operations": [
+            {"resize": {"width": 800, "height": 600}},
+            {"grayscale": true}
+        ]
+    },
+    "priority":3
+}
+
+
 # cmd
 // add task --type download_file --payload '{"url":"https://jsonplaceholder.typicode.com/todos/1","filename":"dummy.json"}' --priority 1
 
-// add task --type send_email --payload '{"url":"https://jsonplaceholder.typicode.com/todos/1","filename":"dummy.json"}' --priority 1
+// add task --type send_email --payload '{"client_name":"Client", "client_email":"bohomolyulian3022003@gmail.com", "recipient_name":"TestUser", "recipient_email":"elliotaldersonhome@gmail.com", "subject":"Test", "html_content":"<html><body><p>Test</p></body></html>"}' --priority 1
+
+// add task --type process_image --payload '{"input_path": "/Users/yulianbohomol/Desktop/WebApps/qugopy/storage/image.jpg", "output_path": "/Users/yulianbohomol/Desktop/WebApps/qugopy/storage/image.webp", "operations": [ {"resize": {"width": 800, "height": 600}}, {"grayscale": true} ]}'
