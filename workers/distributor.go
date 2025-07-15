@@ -53,8 +53,7 @@ func (wd *WorkerDistributor) DistributeWorkers(totalWorkers int, mode string, is
 		IsProduction: isProduction,
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := wd.ctx
 
 	for i := 0; i < pyCount; i++ {
 		wd.wg.Add(1)
@@ -75,7 +74,7 @@ func (wd *WorkerDistributor) DistributeWorkers(totalWorkers int, mode string, is
 						var exists bool
 
 						if mode == "redis" {
-							res, err := rdb.ZPopMin("task_queue", 1).Result()
+							res, err := rdb.ZPopMin("go_queue", 1).Result()
 							if err != nil || len(res) == 0 {
 								time.Sleep(100 * time.Millisecond)
 								continue
@@ -88,7 +87,7 @@ func (wd *WorkerDistributor) DistributeWorkers(totalWorkers int, mode string, is
 							}
 
 						} else {
-							task, exists = queue.DefaultLocalQueue.PQ.Pop()
+							task, exists = queue.GoLocalQueue.PQ.Pop()
 							// queue is empty
 							if !exists {
 								time.Sleep(100 * time.Millisecond)
@@ -116,7 +115,7 @@ func (wd *WorkerDistributor) DistributeWorkers(totalWorkers int, mode string, is
 		return nil, fmt.Errorf("go worker startup failed: %w", err)
 	}
 
-	return cancel, nil
+	return nil, nil
 }
 
 func (wd *WorkerDistributor) Shutdown() error {

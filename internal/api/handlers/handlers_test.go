@@ -64,37 +64,42 @@ func TestEnqueueHandlerRedis_EdgeCases(t *testing.T) {
 		Addr: fmt.Sprintf("%s:%s", cfg.REDIS.HOST, cfg.REDIS.PORT),
 	})
 
-	_ = rdb.Del("task_queue").Err()
+	_ = rdb.Del("go_queue").Err()
 	t.Cleanup(func() {
-		_ = rdb.Del("task_queue").Err()
+		_ = rdb.Del("go_queue").Err()
 	})
 	r := newTestRouter(rdb)
 
 	tests := []struct {
+		queueType  string
 		name       string
 		body       string
 		wantStatus int
 		wantBody   string
 	}{
 		{
+			queueType:  "go_queue",
 			name:       "valid task",
 			body:       `{"type": "download_file", "payload": "test", "priority": 10}`,
 			wantStatus: 201,
 			wantBody:   "Task enqueued",
 		},
 		{
+			queueType:  "go_queue",
 			name:       "missing type field",
 			body:       `{"payload": "download_file", "priority": 10}`,
 			wantStatus: 400,
 			wantBody:   "Invalid request payload",
 		},
 		{
+			queueType:  "python_queue",
 			name:       "invalid priority",
 			body:       `{"payload": "payload", "priority": -1}`,
 			wantStatus: 400,
 			wantBody:   "Invalid request payload",
 		},
 		{
+			queueType:  "python_queue",
 			name:       "invalid json",
 			body:       `{"type": "download_file",`,
 			wantStatus: 400,
@@ -115,7 +120,7 @@ func TestEnqueueHandlerRedis_EdgeCases(t *testing.T) {
 				assert.Contains(t, w.Body.String(), tt.wantBody)
 			}
 			if tt.wantStatus == 201 {
-				res, err := rdb.ZPopMin("task_queue", 1).Result()
+				res, err := rdb.ZPopMin(tt.queueType, 1).Result()
 				assert.NoError(t, err)
 				var task queue.IntTask
 				if err := json.Unmarshal([]byte(res[0].Member.(string)), &task); err != nil {
@@ -178,7 +183,7 @@ func TestEnqueueHandlerLocal_EdgeCases(t *testing.T) {
 				assert.Contains(t, w.Body.String(), tt.wantBody)
 			}
 			if tt.wantStatus == 201 {
-				head, exists := queue.DefaultLocalQueue.PQ.Pop()
+				head, exists := queue.GoLocalQueue.PQ.Pop()
 				assert.Equal(t, true, exists)
 				assert.Equal(t, head.Task.Type, "download_file")
 			}

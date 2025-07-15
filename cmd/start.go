@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/Yulian302/qugopy/config"
 	"github.com/Yulian302/qugopy/grpc"
@@ -76,9 +77,15 @@ func RunApp(isProduction bool) {
 
 	errCh := make(chan error, 2)
 
-	go func() { errCh <- StartApp(cfg.MODE, cfg.WORKERS, isProduction) }()
 	if cfg.MODE == "local" {
 		go func() { errCh <- grpc.Start() }()
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	var cancel context.CancelFunc
+	cancel, err = StartApp(cfg.MODE, cfg.WORKERS, isProduction)
+	if err != nil {
+		log.Fatalf("App failed to start: %v", err)
 	}
 
 	// start shell only in prod
@@ -91,6 +98,7 @@ func RunApp(isProduction bool) {
 		fmt.Println("Service exited with error:", err)
 	case <-ctx.Done():
 		fmt.Println("Shutting down gracefully...")
+		cancel()
 	}
 
 	stop()

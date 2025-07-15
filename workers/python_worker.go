@@ -6,16 +6,18 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"sync"
 )
 
 type PythonWorker struct {
-	cmd    *exec.Cmd
-	ctx    context.Context
-	cancel context.CancelFunc
-	id     string
-	config PythonWorkerConfig
-	mu     sync.Mutex
+	cmd        *exec.Cmd
+	ctx        context.Context
+	cancel     context.CancelFunc
+	id         string
+	config     PythonWorkerConfig
+	mu         sync.Mutex
+	waitDoneCh chan struct{}
 }
 
 type PythonWorkerConfig struct {
@@ -28,17 +30,20 @@ type PythonWorkerConfig struct {
 func NewPythonWorker(parentCtx context.Context, id string, config PythonWorkerConfig) *PythonWorker {
 	ctx, cancel := context.WithCancel(parentCtx)
 	return &PythonWorker{
-		id:     id,
-		ctx:    ctx,
-		cancel: cancel,
-		config: config,
+		id:         id,
+		ctx:        ctx,
+		cancel:     cancel,
+		config:     config,
+		waitDoneCh: make(chan struct{}),
 	}
 }
 
 func (pw *PythonWorker) Start() error {
-	pw.cmd = exec.CommandContext(pw.ctx, path.Join(pw.config.EnvPath, "python3"), pw.config.FilePath, "--mode="+pw.config.Mode)
+	pw.cmd = exec.CommandContext(pw.ctx, path.Join(pw.config.EnvPath, "python3"), pw.config.FilePath)
 
 	pw.cmd.Env = append(os.Environ(),
+		"IS_PRODUCTION="+strconv.FormatBool(pw.config.IsProduction),
+		"MODE="+pw.config.Mode,
 		"PYTHONUNBUFFERED=1",
 		"WORKER_ID="+pw.id,
 	)
@@ -48,7 +53,22 @@ func (pw *PythonWorker) Start() error {
 		pw.cmd.Stderr = os.Stderr
 	}
 
-	return pw.cmd.Start()
+	err := pw.cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err := pw.cmd.Wait()
+		if err != nil {
+			fmt.Printf("Python worker %s exited with error: %v\n", pw.id, err)
+		} else {
+			fmt.Printf("Python worker %s exited normally\n", pw.id)
+		}
+		close(pw.waitDoneCh)
+	}()
+
+	return nil
 }
 
 func (pw *PythonWorker) Stop() error {
@@ -58,8 +78,12 @@ func (pw *PythonWorker) Stop() error {
 	pw.cancel()
 
 	if pw.cmd != nil && pw.cmd.Process != nil {
-		return pw.cmd.Process.Signal(os.Interrupt)
+		if err := pw.cmd.Process.Signal(os.Interrupt); err != nil {
+			fmt.Printf("Error signaling process %s: %v\n", pw.id, err)
+		}
+		<-pw.waitDoneCh
 	}
+
 	return nil
 }
 
